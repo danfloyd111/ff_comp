@@ -12,8 +12,9 @@ This README would normally document whatever steps are necessary to get your app
 
 * Summary of set up
 * Configuration
+Add this custom class as friend of ff_node class defined in ff/node.hpp: into the file node.hpp type "friend class ff_comp;" into the ff_node class definition (somewhere between lines 430 - 440).
 * Dependencies
-* Database configuration
+FastFlow library.
 * How to run tests
 * Deployment instructions
 
