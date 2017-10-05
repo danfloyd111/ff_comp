@@ -36,10 +36,8 @@ namespace ff {
 
     void *ff_comp::run(void *init_task) {
         void *_in=nullptr, *_out=nullptr;
-        int n_nodes = nodes_list.size();
-        auto i = n_nodes;
-        while (--i >= 0) {
-            if (i == n_nodes-1) _out = nodes_list[i]->svc(init_task); // first call
+        for(size_t i=0; i<nodes_list.size(); ++i) {
+            if (i == 0) _out = nodes_list[i]->svc(init_task); // first call
             else _out = nodes_list[i]->svc(_in);
             _in = _out;
         }

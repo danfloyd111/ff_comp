@@ -24,8 +24,8 @@ int main() {
     N1 n1;
     N2 n2;
     ff_comp comp;
-    comp.add_stage(&n2);
     comp.add_stage(&n1);
+    comp.add_stage(&n2);
     cout << "First run:" << endl;
     cout << "Comp collected: " << *((int*)comp.run()) << endl;
     cout << "\n";
