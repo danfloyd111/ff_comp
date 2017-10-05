@@ -30,5 +30,27 @@ int main() {
     cout << "Comp collected: " << *((int*)comp.run()) << endl;
     cout << "\n";
     cout << "Comp collected: " << *((int*)comp.run(new int(100))) << endl;
+    // type testing
+    ff_farm<> f;
+    ff_pipeline p;
+    ff_comp c;
+    c.add_stage(&f);
+    c.add_stage(&p);
+    c.run();
+    cout << "End of first typetest" << endl;
+    ff_comp c2;
+    ff_pipeline p1;
+    ff_pipeline p2;
+    N1 na, nb, nc, nd, ne;
+    p2.add_stage(&nd);
+    p2.add_stage(&ne);
+    p1.add_stage(&nc);
+    p1.add_stage(&p2);
+    c2.add_stage(&na);
+    cout << "first add" << endl;
+    c2.add_stage(&p1);
+    cout << "sec add" << endl;
+    c2.add_stage(&nb);
+    cout << "last add" << endl;
     return EXIT_SUCCESS;
 }
