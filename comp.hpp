@@ -22,14 +22,28 @@ namespace ff {
         virtual ~ff_comp() = default; 
         int add_stage(ff_node *stage);
         const svector<ff_node *>& get_stages() const { return nodes_list; };
-        int run();
+         // init task is the inital task submitted to comp, ex: f(g(h(init_task))), if init_task is null h (in this example) is a function that
+         // takes no input (emitter, constant function, ...)
+        void *run(void *init_task=nullptr);
 
+    };
+
+    int ff_comp::add_stage(ff_node *stage) {
+        if (!stage) return -1;
+        nodes_list.push_back(stage);
+        return 0;
     }
 
-}
+    void *ff_comp::run(void *init_task) {
+        void *_in=nullptr, *_out=nullptr;
+        int n_nodes = nodes_list.size();
+        auto i = n_nodes;
+        while (--i >= 0) {
+            if (i == n_nodes-1) _out = nodes_list[i]->svc(init_task); // first call
+            else _out = nodes_list[i]->svc(_in);
+            _in = _out;
+        }
+        return _out;
+    }
 
-int ff_comp::add_stage(ff_node *stage) {
-    if (!stage) return -1;
-    nodes_list.push_back(stage);
-    return 0;
-}
+} // namespace
