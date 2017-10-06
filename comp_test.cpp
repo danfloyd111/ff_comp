@@ -18,39 +18,53 @@ struct N2: ff_node {
     }
 };
 
+struct Incr: ff_node {
+    void* svc(void *t) {
+        if (t) {
+            *((int*)t)+=1;
+            return t;
+        }
+        else return new int(1);
+    }
+};
+
+struct Doub: ff_node {
+    void* svc(void *t) {
+        if (t) {
+            *((int*)t)*=2;
+            return t;
+        }
+        else return new int(1);
+    }
+};
+
 int main() {
+    // basic test
     N1 n1;
     N2 n2;
     ff_comp comp;
     comp.add_stage(&n1);
     comp.add_stage(&n2);
-    cout << "Testing comp with no input..." << endl;
+    cout << "Basic test with no input..." << endl;
     assert(*((int*)comp.run())=42);
     cout << "-> PASSED" << endl;
-    cout << "Testing comp with input..." << endl;
+    cout << "Basic test with input..." << endl;
     assert(*((int*)comp.run(new int(100)))=100);
     cout << "-> PASSED" << endl;
-    // type testing
-    ff_farm<> f;
-    ff_pipeline p;
-    ff_comp c;
-    c.add_stage(&f);
-    c.add_stage(&p);
-    c.run();
-    cout << "End of first typetest" << endl;
-    ff_comp c2;
-    ff_pipeline p1;
-    ff_pipeline p2;
-    N1 na, nb, nc, nd, ne;
-    p2.add_stage(&nd);
-    p2.add_stage(&ne);
-    p1.add_stage(&nc);
-    p1.add_stage(&p2);
-    c2.add_stage(&na);
-    cout << "first add" << endl;
-    c2.add_stage(&p1);
-    cout << "sec add" << endl;
-    c2.add_stage(&nb);
-    cout << "last add" << endl;
+    // simple pipeline test
+    // composing two nodes with a pipeline in between N1 - Pipe - N2 where Pipe = [Increment -> Double]
+    // expected N2(Pipe(N1(x)))
+    ff_pipeline pipe1;
+    ff_comp comp2;
+    Incr incr;
+    Doub doub;
+    pipe1.add_stage(&incr);
+    pipe1.add_stage(&doub);
+    comp2.add_stage(&n1);
+    comp2.add_stage(&pipe1);
+    comp2.add_stage(&n2);
+    cout << "Basic pipeline test..." << endl;
+    assert(*((int*)comp.run(new int(2)))=6);
+    cout << "--> PASSED" << endl;
     return EXIT_SUCCESS;
 }
