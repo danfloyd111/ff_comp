@@ -1,9 +1,6 @@
 #ifndef FF_COMP_HPP
 #define FF_COMP_HPP
 
-#include <ff/node.hpp>
-// DEBUG ONLY
-#include <iostream>
 #include <ff/pipeline.hpp>
 #include <ff/farm.hpp> 
 
@@ -75,7 +72,6 @@ namespace ff {
     svector<ff_node *> ff_comp::decompose(ff_node* node) {
         svector<ff_node *> n_list;
         if (ff_pipeline *p  = dynamic_cast<ff_pipeline*>(node)) {
-            std::cout << "PIPELINE" << std::endl;
             // needs to be recursive and check the type of the nodes into the pipeline
             svector<ff_node *> pipe_list = p->getStages();
             svector<ff_node *> nested_list;
@@ -83,11 +79,11 @@ namespace ff {
             for (ff_node *n: nested_list) n_list.push_back(n);
         } else if (ff_farm<> *f  = dynamic_cast<ff_farm<>*>(node)) {
             // not yet implemented !
-            std::cout << "FARM" << std::endl;
             error("farm case not yet implemented\n");
             // exit(EXIT_FAILURE);            
         } else if (ff_node *n  = dynamic_cast<ff_node*>(node)) {
-            std::cout << "NODE" << std::endl;
+            // every ff_node derived class which hasn't fall in the previous clauses will fall into this one,
+            // not sure if this is the correct behaviour...
             n_list.push_back(n);
         } else {
             error("only ff_pipeline, ff_farm and ff_node can be composed\n");

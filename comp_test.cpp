@@ -1,5 +1,5 @@
+#include <cassert>
 #include <iostream>
-#include <ff/node.hpp>
 #include "comp.hpp"
 
 using namespace std;
@@ -7,15 +7,13 @@ using namespace ff;
 
 struct N1: ff_node {
     void* svc(void * t) {
-        cout << "Hello, I'm node 1" << endl;
         if (t) return t;
         else return new int(42);
     }
 };
 
 struct N2: ff_node {
-    void* svc(void * t) {
-        cout << "Hello, I'm node 2. Received " << *((int*)t) << endl;
+    void* svc(void *t) {
         return t;
     }
 };
@@ -26,10 +24,12 @@ int main() {
     ff_comp comp;
     comp.add_stage(&n1);
     comp.add_stage(&n2);
-    cout << "First run:" << endl;
-    cout << "Comp collected: " << *((int*)comp.run()) << endl;
-    cout << "\n";
-    cout << "Comp collected: " << *((int*)comp.run(new int(100))) << endl;
+    cout << "Testing comp with no input..." << endl;
+    assert(*((int*)comp.run())=42);
+    cout << "-> PASSED" << endl;
+    cout << "Testing comp with input..." << endl;
+    assert(*((int*)comp.run(new int(100)))=100);
+    cout << "-> PASSED" << endl;
     // type testing
     ff_farm<> f;
     ff_pipeline p;
