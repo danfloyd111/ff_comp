@@ -3,7 +3,7 @@
  * 
  *  Basic test of the comp construct:
  *  Composing two nodes, either with and without input
- */
+*/
 
 #include <cassert>
 #include <iostream>
