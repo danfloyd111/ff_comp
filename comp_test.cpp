@@ -65,6 +65,6 @@ int main() {
     comp2.add_stage(&n2);
     cout << "Basic pipeline test..." << endl;
     assert(*((int*)comp.run(new int(2)))=6);
-    cout << "--> PASSED" << endl;
+    cout << "-> PASSED" << endl;
     return EXIT_SUCCESS;
 }
