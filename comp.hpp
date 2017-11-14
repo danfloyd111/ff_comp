@@ -1,9 +1,33 @@
+/*  
+ *  Author: Daniele Paolini, daniele.paolini@hotmail.it
+ * 
+ *  This file implements the composition construct, see the docs for further informations.
+ * 
+*/
+
+/* ***************************************************************************
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License version 3 as 
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ ****************************************************************************
+ */
+
 #ifndef FF_COMP_HPP
 #define FF_COMP_HPP
 
 #include <ff/pipeline.hpp>
 #include <ff/farm.hpp>
-#include <iostream> // debug
 
 #endif
 
@@ -39,7 +63,6 @@ namespace ff {
                 ff_node *n = nodes_list.back();
                 nodes_list.pop_back();
                 delete n;
-                std::cout << "clean" << std::endl; // debug
             }
         }
     }
@@ -68,14 +91,17 @@ namespace ff {
         if (ff_pipeline *p  = dynamic_cast<ff_pipeline*>(node)) {
             // needs to be recursive and check the type of the nodes into the pipeline
             svector<ff_node *> pipe_list = p->getStages();
+            if (pipe_list.empty()) error("comp has no stages to execute\n");
             for (ff_node *n: pipe_list) {
                 svector<ff_node *> temp = decompose(n);
                 n_list += temp;
             }
         } else if (ff_farm<> *f  = dynamic_cast<ff_farm<>*>(node)) {
-            // not yet implemented !
-            error("farm case not yet implemented\n");
-            // exit(EXIT_FAILURE);            
+            // work in progress
+            svector<ff_node*> workers = f->getWorkers();
+            if(workers.empty()) error("comp has no stages to execute\n");
+            svector<ff_node *> temp = decompose(workers[0]); // decomposing the first, we assume they're all executing the SAME task
+            n_list += temp;            
         } else if (ff_node *n  = dynamic_cast<ff_node*>(node)) {
             // every ff_node derived class which hasn't fall in the previous clauses will fall into this one,
             // not sure if this is the correct behaviour...

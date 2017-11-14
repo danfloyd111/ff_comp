@@ -5,7 +5,7 @@
  *  Composing two nodes with a pipeline in between
  *  Comp(Node1, Pipeline, Node2) where Pipeline = [Increment -> Double]
  *  Expected Node2(Double(Increment(Node1(x)))) where x is the input
-*/
+ */
 
 #include <cassert>
 #include <iostream>
