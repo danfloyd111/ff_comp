@@ -3,6 +3,7 @@
 
 #include <ff/pipeline.hpp>
 #include <ff/farm.hpp>
+#include <iostream> // debug
 
 #endif
 
@@ -13,26 +14,38 @@ namespace ff {
     private:
         svector<ff_node *> nodes_list;
         svector<ff_node *> decompose(ff_node* node);
+        bool node_cleanup;
 
     protected:
         void *svc(void *) { return nullptr; }
         int svc_init() { return -1; }
-        void svc_end() { };
+        void svc_end() { }
 
     public:
-        ff_comp() = default;
-        virtual ~ff_comp() = default; 
+        ff_comp():node_cleanup(false) { };
+        ~ff_comp(); 
         int add_stage(ff_node *stage);
         const svector<ff_node *>& get_stages() const { return nodes_list; };
          // init task is the inital task submitted to comp, ex: f(g(h(init_task))), if init_task is null h (in this example) is a function that
          // takes no input (emitter, constant function, ...)
         void *run(void *init_task=nullptr);
+        void set_cleanup() { node_cleanup = true; }
 
     };
 
+    ff_comp::~ff_comp() {
+        if(node_cleanup) {
+            while (nodes_list.size()>0) {
+                ff_node *n = nodes_list.back();
+                nodes_list.pop_back();
+                delete n;
+                std::cout << "clean" << std::endl; // debug
+            }
+        }
+    }
+
     int ff_comp::add_stage(ff_node *stage) {
         if (!stage) return -1;
-        // stage can't be nullptr because of previous statement
         svector<ff_node *> nested = decompose(stage);
         for (ff_node *n : nested) nodes_list.push_back(n);
         return 0;
