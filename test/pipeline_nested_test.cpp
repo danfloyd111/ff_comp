@@ -77,9 +77,9 @@ int main() {
     comp.add_stage(&node2);
     cout << "Executing nested pipelines test without input..." << endl;
     assert(*((int*)comp.run())==98);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing nested pipelines test with input..." << endl;
     assert(*((int*)comp.run(new int(2)))==18);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

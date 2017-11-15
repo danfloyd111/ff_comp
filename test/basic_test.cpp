@@ -12,14 +12,14 @@
 using namespace std;
 using namespace ff;
 
-struct N1: ff_node {
+struct N1: public ff_node {
     void* svc(void *t){
         if (t) return t;
         else return new int(42);
     }
 };
 
-struct N2: ff_node {
+struct N2: public ff_node {
     void* svc(void *t){
         return t;
     }
@@ -33,9 +33,9 @@ int main() {
     comp.add_stage(&n2);
     cout << "Executing basic test without input..." << endl;
     assert(*((int*)comp.run())==42);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing basic test with input..." << endl;
     assert(*((int*)comp.run(new int(100)))==100);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

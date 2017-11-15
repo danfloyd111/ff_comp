@@ -47,6 +47,6 @@ int main() {
     comp.set_cleanup();
     cout << "Executing complex farm test with input..." << endl;
     assert(*((int*)comp.run(new int(2)))==6);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

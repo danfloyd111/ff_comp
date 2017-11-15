@@ -35,9 +35,9 @@ int main() {
     comp.add_stage(&farm);
     cout << "Executing simple farm test without input..." << endl;
     assert(*((int*)comp.run())==42);
-    cout << "-> PASSED" << endl;
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing simple farm test with input..." << endl;
     assert(*((int*)comp.run(new int(2)))==3);
-    cout << "-> PASSED" << endl; 
+    cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

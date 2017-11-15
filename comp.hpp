@@ -28,6 +28,8 @@
 
 #include <ff/pipeline.hpp>
 #include <ff/farm.hpp>
+#include <ff/utils.hpp>
+#include <sys/time.h>
 
 #endif
 
@@ -39,6 +41,8 @@ namespace ff {
         svector<ff_node *> nodes_list;
         svector<ff_node *> decompose(ff_node* node);
         bool node_cleanup;
+        struct timeval tstart, tstop;
+
 
     protected:
         void *svc(void *) { return nullptr; }
@@ -54,6 +58,7 @@ namespace ff {
          // takes no input (emitter, constant function, ...)
         void *run(void *init_task=nullptr);
         void set_cleanup() { node_cleanup = true; }
+        double ff_time() { return diffmsec(tstop, tstart); } // Misures run time
 
     };
 
@@ -74,7 +79,8 @@ namespace ff {
         return 0;
     }
 
-    void *ff_comp::run(void *init_task) {
+    void* ff_comp::run(void *init_task) {
+        gettimeofday(&tstart,nullptr);
         void *_in=nullptr, *_out=nullptr;
         if (nodes_list.empty()) error("comp has no stages to execute\n");
         for(size_t i=0; i<nodes_list.size(); ++i) {
@@ -82,16 +88,21 @@ namespace ff {
             else _out = nodes_list[i]->svc(_in);
             _in = _out;
         }
+        gettimeofday(&tstop,nullptr);
         return _out;
     }
 
     // free helper function used to decompose nodes into the add_stage method
     svector<ff_node *> ff_comp::decompose(ff_node* node) {
         svector<ff_node *> n_list;
+        // TESTING START
         if (ff_pipeline *p  = dynamic_cast<ff_pipeline*>(node)) {
+        //if (std::is_same<ff_pipeline, decltype(*node)>::value) {
             // needs to be recursive and check the type of the nodes into the pipeline
+            //ff_pipeline *p = dynamic_cast<ff_pipeline*>(node);
+            // TESTING END
             svector<ff_node *> pipe_list = p->getStages();
-            if (pipe_list.empty()) error("comp has no stages to execute\n");
+            if (pipe_list.empty()) error("Decomposing an empty pipeline\n");
             for (ff_node *n: pipe_list) {
                 svector<ff_node *> temp = decompose(n);
                 n_list += temp;
@@ -99,9 +110,11 @@ namespace ff {
         } else if (ff_farm<> *f  = dynamic_cast<ff_farm<>*>(node)) {
             // work in progress
             svector<ff_node*> workers = f->getWorkers();
-            if(workers.empty()) error("comp has no stages to execute\n");
-            svector<ff_node *> temp = decompose(workers[0]); // decomposing the first, we assume they're all executing the SAME task
-            n_list += temp;            
+            if(workers.empty()) error("Decomposing an empty farm\n");
+            else {
+                svector<ff_node *> temp = decompose(workers[0]); // decomposing the first, we assume they're all executing the SAME task
+                n_list += temp;
+            }            
         } else if (ff_node *n  = dynamic_cast<ff_node*>(node)) {
             // every ff_node derived class which hasn't fall in the previous clauses will fall into this one,
             // not sure if this is the correct behaviour...
