@@ -31,8 +31,6 @@
 #include <ff/utils.hpp>
 #include <sys/time.h>
 
-#endif
-
 namespace ff {
 
     class ff_comp: public ff_node {
@@ -62,6 +60,7 @@ namespace ff {
 
     };
 
+    // WHO IS THE OWNER OF THE NODES?
     ff_comp::~ff_comp() {
         if(node_cleanup) {
             while (nodes_list.size()>0) {
@@ -126,4 +125,6 @@ namespace ff {
         return n_list;
     }
 
-} // namespace
+} // namespace ff
+
+#endif // FF_COMP_HPP
