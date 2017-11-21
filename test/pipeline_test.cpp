@@ -64,7 +64,9 @@ int main() {
     assert(*((int*)comp.run())==258);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing basic pipeline test with input..." << endl;
-    assert(*((int*)comp.run(new int(2)))==18);
+    int *foo = new int(2);
+    assert(*((int*)comp.run(foo))==18);
+    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

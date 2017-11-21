@@ -35,7 +35,9 @@ int main() {
     assert(*((int*)comp.run())==42);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing basic test with input..." << endl;
-    assert(*((int*)comp.run(new int(100)))==100);
+    int *foo = new int(100);
+    assert(*((int*)comp.run(foo))==100);
+    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }

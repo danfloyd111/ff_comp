@@ -41,12 +41,19 @@ int main() {
     for (auto i=0; i<num_pipes; ++i) {
         ((ff_pipeline*)pipelines[i])->add_stage(incrementers[i]);
         ((ff_pipeline*)pipelines[i])->add_stage(doublers[i]);
+        ((ff_pipeline*)pipelines[i])->cleanup_nodes();
     }
     ff_farm<> farm(pipelines);
     comp.add_stage(&farm);
-    comp.set_cleanup();
     cout << "Executing complex farm test with input..." << endl;
-    assert(*((int*)comp.run(new int(2)))==6);
+    int* foo = new int(2);
+    assert(*((int*)comp.run(foo))==6);
+    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
+    while (!pipelines.empty()) {
+        ff_node *p = pipelines.back();
+        pipelines.pop_back();
+        delete p;
+    }
     return EXIT_SUCCESS;
 }

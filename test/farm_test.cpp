@@ -30,14 +30,16 @@ int main() {
     vector<ff_node *> workers;
     for (auto i=0; i<num_workers; ++i) workers.push_back(new Worker);
     ff_farm<> farm(workers);
+    farm.cleanup_all();
     ff_comp comp;
-    comp.set_cleanup();
     comp.add_stage(&farm);
     cout << "Executing simple farm test without input..." << endl;
     assert(*((int*)comp.run())==42);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing simple farm test with input..." << endl;
-    assert(*((int*)comp.run(new int(2)))==3);
+    int *foo = new int(2);
+    assert(*((int*)comp.run(foo))==3);
+    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     return EXIT_SUCCESS;
 }
