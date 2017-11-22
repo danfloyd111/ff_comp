@@ -1,11 +1,13 @@
 /*  
  *  Author: Daniele Paolini, daniele.paolini@hotmail.it
  * 
- * Farm complex test:
- * Composing a farm of pipelines
- * Farm[Standard Emitter -> Pipeline(s) -> Standard Collector] where Pipeline = [Increment -> Double]
- * Expected Double(Increment(x)) where x is the input
+ *  Farm complex test:
+ *  Composing a farm of pipelines
+ *  Farm[Standard Emitter -> Pipeline(s) -> Standard Collector] where Pipeline = [Increment -> Double]
+ *  Expected Double(Increment(x)) where x is the input
  * 
+ *  Tested with valgrind http://valgrind.org/info/about.html
+ *
  */
 
 #include <cassert>
@@ -47,13 +49,13 @@ int main() {
     comp.add_stage(&farm);
     cout << "Executing complex farm test with input..." << endl;
     int* foo = new int(2);
-    assert(*((int*)comp.run(foo))==6);
-    delete foo;
+    assert(*((int*) comp.run(foo))==6);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     while (!pipelines.empty()) {
         ff_node *p = pipelines.back();
         pipelines.pop_back();
         delete p;
     }
+    delete foo;
     return EXIT_SUCCESS;
 }

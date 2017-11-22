@@ -3,6 +3,9 @@
  * 
  *  Basic test of the comp construct:
  *  Composing two nodes, either with and without input
+ *  
+ *  Tested with valgrind http://valgrind.org/info/about.html
+ *
  */
 
 #include <cassert>
@@ -32,12 +35,15 @@ int main() {
     comp.add_stage(&n1);
     comp.add_stage(&n2);
     cout << "Executing basic test without input..." << endl;
-    assert(*((int*)comp.run())==42);
+    int* result = (int*) comp.run();
+    assert(*result==42);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing basic test with input..." << endl;
     int *foo = new int(100);
-    assert(*((int*)comp.run(foo))==100);
-    delete foo;
+    int res = *(int*)(comp.run(foo));
+    assert(res==100);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
+    delete foo;
+    delete result;
     return EXIT_SUCCESS;
 }

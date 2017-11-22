@@ -61,12 +61,14 @@ int main() {
     comp.add_stage(&pipeline);
     comp.add_stage(&n2);
     cout << "Executing basic pipeline test without input..." << endl;
-    assert(*((int*)comp.run())==258);
+    int* result = (int*) comp.run();
+    assert(*result==258);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing basic pipeline test with input..." << endl;
     int *foo = new int(2);
     assert(*((int*)comp.run(foo))==18);
-    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
+    delete foo;
+    delete result;
     return EXIT_SUCCESS;
 }

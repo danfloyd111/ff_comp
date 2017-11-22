@@ -6,6 +6,8 @@
  *  Comp(Farm) where Farm = [Default Emitter->Worker(s)->Default Collector]
  *  Expected Worker(x) where x is the input
  *
+ *  Tested with valgrind http://valgrind.org/info/about.html
+ *
 */
 
 #include <cassert>
@@ -34,12 +36,14 @@ int main() {
     ff_comp comp;
     comp.add_stage(&farm);
     cout << "Executing simple farm test without input..." << endl;
-    assert(*((int*)comp.run())==42);
+    int* result = (int*) comp.run();
+    assert(*result==42);
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
     cout << "Executing simple farm test with input..." << endl;
     int *foo = new int(2);
     assert(*((int*)comp.run(foo))==3);
-    delete foo;
     cout << "-> PASSED [Elapsed time: " << comp.ff_time() << "(ms)]" << endl;
+    delete foo;
+    delete result;
     return EXIT_SUCCESS;
 }
