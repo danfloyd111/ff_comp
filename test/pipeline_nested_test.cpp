@@ -7,6 +7,8 @@
  *  InnerPipeline = [Increment -> Double], Node-i will add i to his input (except for node 1)
  *  Expected: Node2(Node4(Double(Increment(Node3(Node1(x)))))) where x is the input
  * 
+ *  Tested with valgrind http://valgrind.org/info/about.html
+ * 
 */
 
 #include <cassert>
