@@ -18,16 +18,16 @@
 
 using namespace std;
 
-// helper functions (definitions are at the bottom of this file)
-double seq_sin(double);
-double seq_cos(double);
-double seq_fun(double);
+// helper function (definitions are at the bottom of this file)
+double sequentializer(double, unsigned long, std::function<double(double)>);
 
 int main() {
 
-    // creating an universal random big data set for the benchmark (~50MB)
-    
-    const size_t DATA_SIZE = 6553600; 
+    const size_t DATA_SIZE = 6553600;
+    const size_t CORES_NUM = 8;
+    const unsigned long RUNS = 1000;
+
+    // creating an universal random big data set for the benchmark (~50MB) 
 
     uniform_real_distribution<double> dist {1, 10000};
     default_random_engine engine { };
@@ -50,13 +50,13 @@ int main() {
     cout << "Beginning sequential computation..." << endl;
     seq_start = chrono::system_clock::now();
     for (auto i=0; i<DATA_SIZE; ++i) {
-        auto tmp = seq_sin(data_set[i]); // stage 1
-        tmp = seq_cos(tmp);              // stage 2
-        tmp = sqrt(tmp);                 // stage 3
-        tmp = seq_fun(tmp);              // stage 4
-        tmp = seq_sin(tmp);              // stage 5
-        tmp = seq_cos(tmp);              // stage 6
-        tmp = atan(tmp*tmp);             // stage 7
+        auto tmp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin));  // stage 1
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));               // stage 2
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 3
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(atan));              // stage 4
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 5
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));               // stage 6
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 7
         seq_result_set.push_back(tmp);
     }
     seq_end = chrono::system_clock::now();
@@ -69,16 +69,7 @@ int main() {
 
 // definition of the helper functions
 
-double seq_sin(double x) {
-    for (auto i=0; i<10; ++i) x = sin(x);
-    return x;
-}
-
-double seq_cos(double x) {
-    for (auto i=0; i<10; ++i) x = cos(x);
-    return x;
-}
-
-double seq_fun(double x) {
-    return log(2*M_PI*x);
+double sequentializer (double input, unsigned long runs, std::function<double(double)> fun) {
+    for (auto i=0; i<runs; ++i) input = fun(input);
+    return input;
 }
