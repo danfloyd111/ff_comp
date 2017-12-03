@@ -20,7 +20,7 @@
 using namespace std;
 using namespace ff;
 
-const size_t DATA_SIZE = 6553600;
+const size_t DATA_SIZE = 6553600; // about 50MB
 const size_t CORES_NUM = 8;         // TODO: should make parametric n. of cores
 const unsigned long RUNS = 1000;
 
@@ -28,7 +28,53 @@ const unsigned long RUNS = 1000;
 
 double sequentializer(double, unsigned long, std::function<double(double)>);
 
-// Comp stages
+// Pipeline emitter
+
+struct Emitter : public ff_node {
+    private:
+    const vector<double> in_stream;
+    protected:
+    unsigned long index;
+    int svc_init() {
+        index = 0;
+        return 0;
+    } 
+    void *svc(void *t) {
+        if (in_stream.empty()) {
+            error("Emitter has no input\n");
+            return EOS;
+        }
+        if (index++ >= in_stream.size()) return EOS;
+        return new double(in_stream[index]);;
+    }
+    void svc_end() {
+        index = 0;
+        return;
+    }
+    public:
+    Emitter(const vector<double>& is) : in_stream(is) { }    
+};
+
+// Pipeline collector
+
+struct Collector: public ff_node {
+    private:
+    vector<double> out_stream;
+    protected:
+    void *svc(void *t) {
+        double val = *((double*)t);
+        out_stream.push_back(val);
+        delete t;
+        return GO_ON;
+    }
+    public:
+    Collector(const vector<double>& os) : out_stream(os) { }    
+    const vector<double>& get_output_stream() const {
+        return out_stream;
+    }
+};
+
+// Comp & Pipeline internal stages
 
 struct SinStage : public ff_node {
     void *svc(void *t) {
@@ -61,7 +107,7 @@ int main() {
 
     // creating an universal random big data set for the benchmark (~50MB) 
 
-    uniform_real_distribution<double> dist {1, 10000};
+    uniform_real_distribution<double> dist {0, 2*M_PI};
     default_random_engine engine { };
     auto next_value = bind(dist, engine);
     
@@ -77,7 +123,7 @@ int main() {
     
     vector<double> seq_result_set;
     seq_result_set.reserve(DATA_SIZE);
-    cout << "Beginning sequential computation..." << endl;
+    cout << "Running sequential computation..." << endl;
     chrono_start = chrono::system_clock::now();
     for (size_t i=0; i<DATA_SIZE; ++i) {
         auto tmp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin));  // stage 1
@@ -110,7 +156,7 @@ int main() {
     comp.add_stage(&stage6);
     comp.add_stage(&stage7);
 
-    cout << "Beginning composed computation..." << endl;
+    cout << "Running composed computation..." << endl;
 
     chrono_start = chrono::system_clock::now();
     for (size_t i=0; i<DATA_SIZE; ++i) {
@@ -123,18 +169,43 @@ int main() {
     auto comp_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << comp_time << "(ms)]" << endl;
 
+    // pipeline test
+
+    ff_pipeline pipeline;
+    vector<double> pipe_result_set;
+    Emitter emitter(data_set);
+    Collector collector(pipe_result_set);
+    pipeline.add_stage(&emitter);
+    pipeline.add_stage(&stage2);
+    pipeline.add_stage(&stage3);
+    pipeline.add_stage(&stage4);
+    pipeline.add_stage(&stage5);
+    pipeline.add_stage(&stage6);
+    pipeline.add_stage(&collector);
+
+    cout << "Running pipelined computation..." << endl;
+
+    chrono_start = chrono::system_clock::now();
+    if(pipeline.run_and_wait_end()<0) error("Running pipeline\n");
+    chrono_stop = chrono::system_clock::now();
+
+    auto pipe_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
+    cout << "Done! [Elapsed time: " << pipe_time << "(ms)]" << endl;
+
+    // performance evaluation
+
     double diff;
     if (comp_time > seq_time) diff = comp_time - seq_time; else diff = seq_time - comp_time;
-    cout << "-- Performance --\n";
+    cout << "-- Performance evaluation --\n";
     cout << "Difference between sequential and comp: " << diff << "(ms)\n";
     cout << "Checking consistency between the result sets...\n";
     size_t i=0;
-    bool go_on = true;
-    while (i<comp_result_set.size() && i<seq_result_set.size() && go_on) {
-        if (comp_result_set[i] != seq_result_set[i]) go_on = false;
+    bool consistence = true;
+    while (i<comp_result_set.size() && i<seq_result_set.size() && consistence) {
+        if (comp_result_set[i] != seq_result_set[i]) consistence = false;
         ++i;
     }
-    if (!go_on) cout << "The results are consistent" << endl; else cout << "The results are NOT consistent" << endl; 
+    if (consistence) cout << "The results are consistent" << endl; else cout << "The results are NOT consistent" << endl; 
 
     return EXIT_SUCCESS;
 
