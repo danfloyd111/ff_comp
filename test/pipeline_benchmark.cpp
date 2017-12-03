@@ -69,7 +69,7 @@ int main() {
 
     vector<double> data_set;
     data_set.reserve(DATA_SIZE);
-    for (auto i=0; i<DATA_SIZE; ++i) data_set.push_back(next_value());
+    for (size_t i=0; i<DATA_SIZE; ++i) data_set.push_back(next_value());
 
     cout << "Done!" << endl;
     
@@ -79,7 +79,7 @@ int main() {
     seq_result_set.reserve(DATA_SIZE);
     cout << "Beginning sequential computation..." << endl;
     chrono_start = chrono::system_clock::now();
-    for (auto i=0; i<DATA_SIZE; ++i) {
+    for (size_t i=0; i<DATA_SIZE; ++i) {
         auto tmp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin));  // stage 1
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));               // stage 2
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 3
@@ -113,7 +113,7 @@ int main() {
     cout << "Beginning composed computation..." << endl;
 
     chrono_start = chrono::system_clock::now();
-    for (auto i=0; i<DATA_SIZE; ++i) {
+    for (size_t i=0; i<DATA_SIZE; ++i) {
         double* task = new double(data_set[i]);
         task = (double*) comp.run(task);
         comp_result_set.push_back(double(*task));
@@ -128,7 +128,7 @@ int main() {
     cout << "-- Performance --\n";
     cout << "Difference between sequential and comp: " << diff << "(ms)\n";
     cout << "Checking consistency between the result sets...\n";
-    auto i=0;
+    size_t i=0;
     bool go_on = true;
     while (i<comp_result_set.size() && i<seq_result_set.size() && go_on) {
         if (comp_result_set[i] != seq_result_set[i]) go_on = false;
@@ -144,6 +144,6 @@ int main() {
 // definition of the helper functions
 
 double sequentializer (double input, unsigned long runs, std::function<double(double)> fun) {
-    for (auto i=0; i<runs; ++i) input = fun(input);
+    for (size_t i=0; i<runs; ++i) input = fun(input);
     return input;
 }
