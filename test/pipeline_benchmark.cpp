@@ -12,6 +12,7 @@
 #include <iostream>
 #include <random>
 #include <functional>
+#include <unistd.h>
 #include <vector>
 #include <cmath>
 #include <chrono>
@@ -20,9 +21,9 @@
 using namespace std;
 using namespace ff;
 
-const size_t DATA_SIZE = 6553600; // about 50MB
-const size_t CORES_NUM = 8;         // TODO: should make parametric n. of cores
-const unsigned long RUNS = 1000;
+size_t DATA_SIZE = 6553600;    // default size is ~50MB
+size_t CORES_NUM = 7;          // default n. of cores
+unsigned long RUNS = 1000;     // default computation grain
 
 // Helper functions (definitions are at the bottom of this file)
 
@@ -45,7 +46,7 @@ struct Emitter : public ff_node {
             return EOS;
         }
         if (index++ >= in_stream.size()) return EOS;
-        return new double(in_stream[index]);;
+        return new double(sequentializer(in_stream[index],RUNS,static_cast<double(*)(double)>(sin)));
     }
     void svc_end() {
         index = 0;
@@ -63,12 +64,11 @@ struct Collector: public ff_node {
     protected:
     void *svc(void *t) {
         double val = *((double*)t);
-        out_stream.push_back(val);
-        delete t;
+        out_stream.push_back(sequentializer(val,RUNS,static_cast<double(*)(double)>(sin)));
+        delete (double*) t;
         return GO_ON;
     }
-    public:
-    Collector(const vector<double>& os) : out_stream(os) { }    
+    public:    
     const vector<double>& get_output_stream() const {
         return out_stream;
     }
@@ -100,7 +100,55 @@ struct AtaStage : public ff_node {
     }
 };
 
-int main() {
+int main(int argc, char **argv) {
+
+    // parsing command line options
+    
+    int param;
+    const char *pattern = "hc:r:s:";
+    while ((param = getopt(argc, argv, pattern)) != -1) {
+        try {
+            switch (param) {
+            case 'h':
+                cout << "Usage: pipeline_benchmark [-c number of cores] [-r computation grain] [-s data set size]" << endl;
+                return EXIT_SUCCESS;
+            case 'c':
+                CORES_NUM = stoi(optarg);
+                if (CORES_NUM < 1) {
+                    cerr << "Error: number of cores must be greater than zero and shouldn't exceed the available cores on your machine" << endl;
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'r':
+                RUNS = stoi(optarg);
+                if (RUNS < 1) {
+                    cerr << "Error: the grain of the computation must be greater than zero" << endl;
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 's':
+                DATA_SIZE = stoi(optarg);
+                if (DATA_SIZE < 1) {
+                    cerr << "Error: data size must be greater than zero" << endl;
+                    return EXIT_FAILURE;
+                }
+                break;
+            case '?':
+                if (optopt == 'c' || optopt == 'r' || optopt == 's')
+                    cerr << "Error: option -" << optopt << " requires an argument" << endl;
+                else if (isprint(optopt))
+                    cerr << "Error: unknown option " << optopt << endl;
+                else
+                    cerr << "Error: unknown option character" << endl;
+            default:
+                cerr << "Error: parsing command line options" << endl;
+                return EXIT_FAILURE;
+            }
+        } catch (exception &e) {
+            cerr << "Error: invalid command line argument\n";
+            return EXIT_FAILURE;
+        }
+    }
 
     std::chrono::time_point<std::chrono::system_clock> chrono_start;
     std::chrono::time_point<std::chrono::system_clock> chrono_stop;
@@ -118,6 +166,12 @@ int main() {
     for (size_t i=0; i<DATA_SIZE; ++i) data_set.push_back(next_value());
 
     cout << "Done!" << endl;
+
+    cout << "-- Benchmark specs --\n";
+    cout << "Number of cores (for the pipeline test): " << CORES_NUM << "\n";
+    cout << "Data set size:                           " << DATA_SIZE*8 / (float) 1000000 << "(MB)\n";
+    cout << "Parallelism grain:                       " << RUNS << " runs per \"stage\"\n";
+    cout << "Warning: it's recommended to not exceed the number of cores of this machine\n";
     
     // sequential test
     
@@ -172,9 +226,8 @@ int main() {
     // pipeline test
 
     ff_pipeline pipeline;
-    vector<double> pipe_result_set;
     Emitter emitter(data_set);
-    Collector collector(pipe_result_set);
+    Collector collector;
     pipeline.add_stage(&emitter);
     pipeline.add_stage(&stage2);
     pipeline.add_stage(&stage3);
@@ -188,22 +241,48 @@ int main() {
     chrono_start = chrono::system_clock::now();
     if(pipeline.run_and_wait_end()<0) error("Running pipeline\n");
     chrono_stop = chrono::system_clock::now();
+    vector<double> pipe_result_set;
+    pipe_result_set.reserve(DATA_SIZE);
+    pipe_result_set = collector.get_output_stream();
 
     auto pipe_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << pipe_time << "(ms)]" << endl;
 
     // performance evaluation
 
-    double diff;
-    if (comp_time > seq_time) diff = comp_time - seq_time; else diff = seq_time - comp_time;
+    double diff1, diff2, diff3;
+    float perc1, perc2, perc3;
+    if (comp_time > seq_time) {
+        diff1 = comp_time - seq_time;
+        perc1 = diff1 / comp_time * 100.0;
+    } else {
+        diff1 = seq_time - comp_time;
+        perc1 = diff1 / seq_time * 100.0;
+    }
+    if (pipe_time > comp_time) {
+        diff2 = pipe_time - comp_time;
+        perc2 = diff2 / pipe_time * 100.0;
+    } else {
+        diff2 = comp_time - pipe_time;
+        perc2 = diff2 / comp_time * 100.0;
+    }
+    if (pipe_time > seq_time) {
+        diff3 = pipe_time - seq_time;
+        perc3 = diff3 / pipe_time * 100.0;
+    } else {
+        diff3 = seq_time - pipe_time;
+        perc3 = diff3 / seq_time * 100.0;
+    }
     cout << "-- Performance evaluation --\n";
-    cout << "Difference between sequential and comp: " << diff << "(ms)\n";
+    cout << "Difference between sequential and comp: " << diff1 << "(ms) " << perc1 << "%\n";
+    cout << "Difference between pipeline and comp: " << diff2 << "(ms) " << perc2 << "%\n";
+    cout << "Difference between sequential and pipeline: " << diff3 << "(ms) " << perc3 << "%\n";
     cout << "Checking consistency between the result sets...\n";
     size_t i=0;
     bool consistence = true;
     while (i<comp_result_set.size() && i<seq_result_set.size() && consistence) {
-        if (comp_result_set[i] != seq_result_set[i]) consistence = false;
-        ++i;
+        if (comp_result_set[i] != seq_result_set[i] || comp_result_set[i] != pipe_result_set[i]) consistence = false;
+        i++;
     }
     if (consistence) cout << "The results are consistent" << endl; else cout << "The results are NOT consistent" << endl; 
 
