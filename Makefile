@@ -37,13 +37,13 @@ farm_test: test/farm_test.cpp
 	@test/bin/farm_test
 	@echo ""
 
-# this recipe will compile and run the benchmark with standard options, see the source code for further options
 pipeline_benchmark: test/pipeline_benchmark.cpp
 	$(DIR_TEST)
 	@echo "Compiling pipeline_benchmark sources..."
 	@$(CC) $(CFLAGS) test/pipeline_benchmark.cpp -o test/bin/pipeline_benchmark
 	@echo "Done!"
-	@test/bin/pipeline_benchmark
+	@echo "Run this benchmark with \"test/bin/pipeline_benchmark\""
+	@test/bin/pipeline_benchmark -h
 	@echo ""
 
 pipeline_nested_test: test/pipeline_nested_test.cpp

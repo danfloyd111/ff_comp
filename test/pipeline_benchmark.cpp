@@ -64,7 +64,7 @@ struct Collector: public ff_node {
     protected:
     void *svc(void *t) {
         double val = *((double*)t);
-        out_stream.push_back(sequentializer(val,RUNS,static_cast<double(*)(double)>(sin)));
+        out_stream.push_back(sequentializer(val,RUNS,static_cast<double(*)(double)>(cos)));
         delete (double*) t;
         return GO_ON;
     }
@@ -74,7 +74,7 @@ struct Collector: public ff_node {
     }
 };
 
-// Comp & Pipeline internal stages
+// Comp & Pipeline internal comp_stages
 
 struct SinStage : public ff_node {
     void *svc(void *t) {
@@ -88,14 +88,6 @@ struct CosStage : public ff_node {
     void *svc(void *t) {
         double val = *((double*)t);
         *((double*)t) = sequentializer(val, RUNS, static_cast<double(*)(double)>(cos));
-        return t;
-    }
-};
-
-struct AtaStage : public ff_node {
-    void *svc(void *t) {
-        double val = *((double*)t);
-        *((double*)t) = sequentializer(val, RUNS, static_cast<double(*)(double)>(atan));
         return t;
     }
 };
@@ -114,8 +106,8 @@ int main(int argc, char **argv) {
                 return EXIT_SUCCESS;
             case 'c':
                 CORES_NUM = stoi(optarg);
-                if (CORES_NUM < 1) {
-                    cerr << "Error: number of cores must be greater than zero and shouldn't exceed the available cores on your machine" << endl;
+                if (CORES_NUM < 2) {
+                    cerr << "Error: number of cores must be greater than one and shouldn't exceed the available cores on your machine" << endl;
                     return EXIT_FAILURE;
                 }
                 break;
@@ -167,7 +159,7 @@ int main(int argc, char **argv) {
 
     cout << "Done!" << endl;
 
-    cout << "-- Benchmark specs --\n";
+    cout << "-- Benchmark specifications --\n";
     cout << "Number of cores (for the pipeline test): " << CORES_NUM << "\n";
     cout << "Data set size:                           " << DATA_SIZE*8 / (float) 1000000 << "(MB)\n";
     cout << "Parallelism grain:                       " << RUNS << " runs per \"stage\"\n";
@@ -180,25 +172,33 @@ int main(int argc, char **argv) {
     cout << "Running sequential computation..." << endl;
     chrono_start = chrono::system_clock::now();
     for (size_t i=0; i<DATA_SIZE; ++i) {
+        double temp;
+        for (size_t j=0; j<CORES_NUM; ++j) {
+            if (j == 0) temp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin)); // first call
+            else if (j%2 == 0) temp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin)); // sin call
+            else temp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(cos)); // cos call
+        }
+/*        
         auto tmp = sequentializer(data_set[i], RUNS, static_cast<double(*)(double)>(sin));  // stage 1
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));               // stage 2
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 3
-        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(atan));              // stage 4
+        tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));              // stage 4
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 5
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(cos));               // stage 6
         tmp = sequentializer(tmp, RUNS, static_cast<double(*)(double)>(sin));               // stage 7
         seq_result_set.push_back(tmp);
+*/        
+        seq_result_set.push_back(temp);
     }
     chrono_stop = chrono::system_clock::now();
     auto seq_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << seq_time << "(ms)]" << endl;
 
     // comp test
-
+/*    
     ff_comp comp;
     SinStage stage1, stage3, stage5, stage7;
-    CosStage stage2, stage6;
-    AtaStage stage4;
+    CosStage stage2, stage4, stage6;
     vector<double> comp_result_set;
     comp_result_set.reserve(DATA_SIZE);
 
@@ -222,9 +222,40 @@ int main(int argc, char **argv) {
     chrono_stop = chrono::system_clock::now();
     auto comp_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << comp_time << "(ms)]" << endl;
+*/  
+
+    ff_comp comp;
+    vector<ff_node*> comp_stages;
+    comp_stages.reserve(CORES_NUM);
+    vector<double> comp_result_set;
+    comp_result_set.reserve(DATA_SIZE);
+
+    for (size_t i=0; i<CORES_NUM; ++i){
+        if (i%2==0) comp_stages[i] = new SinStage();
+        else comp_stages[i] = new CosStage();
+        comp.add_stage(comp_stages[i]);
+    }
+
+    cout << "Running composed computation..." << endl;
+
+    chrono_start = chrono::system_clock::now();
+    for (size_t i=0; i<DATA_SIZE; ++i) {
+        double* task = new double(data_set[i]);
+        task = (double*) comp.run(task);
+        comp_result_set.push_back(double(*task));
+        delete task;
+    }
+    chrono_stop = chrono::system_clock::now();
+    auto comp_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
+    cout << "Done! [Elapsed time: " << comp_time << "(ms)]" << endl;
+
+    while (!comp_stages.empty()) {
+        delete comp_stages.back();
+        comp_stages.pop_back();
+    }
 
     // pipeline test
-
+/*
     ff_pipeline pipeline;
     Emitter emitter(data_set);
     Collector collector;
@@ -247,6 +278,39 @@ int main(int argc, char **argv) {
 
     auto pipe_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << pipe_time << "(ms)]" << endl;
+*/
+
+    ff_pipeline pipeline;
+    Emitter emitter(data_set);
+    Collector collector;
+    size_t internal_stages = CORES_NUM - 2; // we already have an emitter and a collector
+    vector<ff_node*> pipe_stages;
+    pipe_stages.reserve(internal_stages);
+
+    pipeline.add_stage(&emitter);
+    for (size_t i=0; i<internal_stages; ++i) {
+        if(i%2!=0) pipe_stages[i] = new CosStage();
+        else pipe_stages[i] = new SinStage();
+        pipeline.add_stage(pipe_stages[i]);
+    }
+    pipeline.add_stage(&collector);
+
+    cout << "Running pipelined computation..." << endl;
+
+    chrono_start = chrono::system_clock::now();
+    if(pipeline.run_and_wait_end()<0) error("Running pipeline\n");
+    chrono_stop = chrono::system_clock::now();
+    vector<double> pipe_result_set;
+    pipe_result_set.reserve(DATA_SIZE);
+    pipe_result_set = collector.get_output_stream();
+
+    auto pipe_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
+    cout << "Done! [Elapsed time: " << pipe_time << "(ms)]" << endl;
+
+    while (!pipe_stages.empty()) {
+        delete pipe_stages.back();
+        pipe_stages.pop_back();
+    }
 
     // performance evaluation
 
@@ -273,7 +337,7 @@ int main(int argc, char **argv) {
         diff3 = seq_time - pipe_time;
         perc3 = diff3 / seq_time * 100.0;
     }
-    cout << "-- Performance evaluation --\n";
+    cout << "-- Performance statistics --\n";
     cout << "Difference between sequential and comp: " << diff1 << "(ms) " << perc1 << "%\n";
     cout << "Difference between pipeline and comp: " << diff2 << "(ms) " << perc2 << "%\n";
     cout << "Difference between sequential and pipeline: " << diff3 << "(ms) " << perc3 << "%\n";
@@ -282,6 +346,7 @@ int main(int argc, char **argv) {
     bool consistence = true;
     while (i<comp_result_set.size() && i<seq_result_set.size() && consistence) {
         if (comp_result_set[i] != seq_result_set[i] || comp_result_set[i] != pipe_result_set[i]) consistence = false;
+        cout << comp_result_set[i] << seq_result_set[i] << pipe_result_set[i] << "\n";
         i++;
     }
     if (consistence) cout << "The results are consistent" << endl; else cout << "The results are NOT consistent" << endl; 
