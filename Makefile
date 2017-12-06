@@ -42,7 +42,7 @@ pipeline_benchmark: test/pipeline_benchmark.cpp
 	@echo "Compiling pipeline_benchmark sources..."
 	@$(CC) $(CFLAGS) test/pipeline_benchmark.cpp -o test/bin/pipeline_benchmark
 	@echo "Done!"
-	@echo "Run this benchmark with \"test/bin/pipeline_benchmark\""
+	@echo "Run this benchmark with \"test/bin/pipeline_benchmark.sh\""
 	@test/bin/pipeline_benchmark -h
 	@echo ""
 
