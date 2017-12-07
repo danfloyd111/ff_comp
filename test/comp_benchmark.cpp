@@ -18,6 +18,7 @@
 #include <chrono>
 #include <iomanip>
 #include "../comp.hpp"
+#include <ff/farm.hpp>
 
 using namespace std;
 using namespace ff;
@@ -30,18 +31,78 @@ unsigned long RUNS = 1000;     // default computation grain
 
 double sequentializer(double, unsigned long, std::function<double(double)>);
 
+// Farm Emitter
+
+struct FarmEmitter : public ff_node {
+private:
+    const vector<double> in_stream;
+    unsigned long index;
+protected:
+    int svc_init() {
+        index = 0;
+        return 0;
+    }
+    void *svc(void *) {
+        if (in_stream.empty()) {
+            error("Farm Emitter has no input\n");
+            return EOS;
+        }
+        auto val = in_stream[index];
+        if (index++ >= in_stream.size()) return EOS;
+        return new double(val);
+    }
+public:
+    FarmEmitter(const vector<double>& is) : in_stream(is) { }
+};
+
+// Farm Collector
+
+struct FarmCollector : public ff_node {
+private:
+    vector<double> out_stream;
+protected:
+    void *svc(void *t) {
+        auto val = double(*((double*)t));
+        out_stream.push_back(val);
+        delete (double*) t;
+        return GO_ON;
+    }
+public:
+    const vector<double>& get_output_stream() const { return out_stream; }
+};
+
+// Farm Worker
+
+struct FarmWorker : public ff_node {
+private:
+    const size_t runs, n_stages;
+protected:
+    void *svc(void *t) {
+        double temp;
+        for (size_t j=0; j<n_stages; ++j) {
+            if (j==0) temp = sequentializer(*((double*)t), runs, static_cast<double(*)(double)>(sin)); // first call
+            if (j%2==0) temp = sequentializer(temp, runs, static_cast<double(*)(double)>(sin)); // sin call
+            else temp = sequentializer(temp, runs, static_cast<double(*)(double)>(cos)); // cos call
+        }
+        *((double*)t) = temp;
+        return t;
+    }
+public:
+    FarmWorker(size_t runs, size_t n_stages) : runs(runs), n_stages(n_stages) { }
+};
+
 // Pipeline emitter
 
 struct Emitter : public ff_node {
-    private:
+private:
     const vector<double> in_stream;
-    protected:
     unsigned long index;
+protected:
     int svc_init() {
         index = 0;
         return 0;
     } 
-    void *svc(void *t) {
+    void *svc(void *) {
         if (in_stream.empty()) {
             error("Emitter has no input\n");
             return EOS;
@@ -54,17 +115,17 @@ struct Emitter : public ff_node {
         index = 0;
         return;
     }
-    public:
+public:
     Emitter(const vector<double>& is) : in_stream(is) { }    
 };
 
 // Pipeline collector
 
 struct Collector: public ff_node {
-    private:
+private:
     vector<double> out_stream;
-    const bool odd;
-    protected:
+   const bool odd;
+protected:
     void *svc(void *t) {
         double val = *((double*)t);
         if (odd) out_stream.push_back(sequentializer(val,RUNS,static_cast<double(*)(double)>(sin)));
@@ -72,11 +133,9 @@ struct Collector: public ff_node {
         delete (double*) t;
         return GO_ON;
     }
-    public:
+public:
     Collector(bool is_odd) : odd(is_odd) { }    
-    const vector<double>& get_output_stream() const {
-        return out_stream;
-    }
+    const vector<double>& get_output_stream() const { return out_stream; }
 };
 
 // Comp & Pipeline internal comp_stages
@@ -107,7 +166,7 @@ int main(int argc, char **argv) {
         try {
             switch (param) {
             case 'h':
-                cout << "Usage: comp_benchmark.sh [-c number of cores] [-r parallelism grain] [-s data set size]" << endl;
+                cout << "Usage: comp_benchmark [-c number of cores] [-r parallelism grain] [-s data set size]" << endl;
                 return EXIT_SUCCESS;
             case 'c':
                 CORES_NUM = stoi(optarg);
@@ -256,11 +315,42 @@ int main(int argc, char **argv) {
         delete pipe_stages.back();
         pipe_stages.pop_back();
     }
+/*
+    // farm test (using ordered farm to be able to confront the results with other test)
+
+    FarmEmitter femitter(data_set);
+    FarmCollector fcollector;
+    vector<unique_ptr<ff_node>> fworkers;
+    fworkers.reserve(CORES_NUM-2); // modified with -2
+    for (size_t i=0; i<CORES_NUM-2; ++i) fworkers.push_back(make_unique<FarmWorker>(RUNS,CORES_NUM-2)); // modified with -2
+    ff_OFarm<> ofarm(move(fworkers));
+//    ff_Pipe<> pipe(femitter, ofarm, fcollector);
+    ff_pipeline fpipe;
+    fpipe.add_stage(&emitter);
+    fpipe.add_stage(&ofarm);
+    if (CORES_NUM%2 == 0) fpipe.add_stage(&even_collector);
+    else fpipe.add_stage(&odd_collector);
+
+    cout << "Running farmed computation..." << endl;
+
+    chrono_start = chrono::system_clock::now();
+    if (fpipe.run_and_wait_end()<0) error("Running farm test\n");
+    chrono_stop = chrono::system_clock::now();
+    vector<double> farm_result_set;
+    farm_result_set.reserve(DATA_SIZE);
+    if (CORES_NUM%2 == 0) farm_result_set = even_collector.get_output_stream();
+    else farm_result_set = odd_collector.get_output_stream();
+//    farm_result_set = fcollector.get_output_stream();
+
+    auto farm_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
+    cout << "Done! [Elapsed time: " << farm_time << "(ms)]" << endl;
+*/
+//TODO: Refactorize all the code until TODO:end, use functions to calculate diffs and percs and to print statistics
 
     // performance evaluation
 
-    double diff1, diff2, diff3;
-    float perc1, perc2, perc3;
+    double diff1, diff2, diff3, diff4, diff5, diff6;
+    float perc1, perc2, perc3, perc4, perc5, perc6;
     if (comp_time > seq_time) {
         diff1 = comp_time - seq_time;
         perc1 = diff1 / comp_time * 100.0;
@@ -282,17 +372,49 @@ int main(int argc, char **argv) {
         diff3 = seq_time - pipe_time;
         perc3 = diff3 / seq_time * 100.0;
     }
-
+/*
+    if (farm_time > comp_time) {
+        diff4 = farm_time - comp_time;
+        perc4 = diff4 / farm_time * 100.0;
+    } else {
+        diff4 = comp_time - farm_time;
+        perc4 = diff4 / comp_time * 100.0;
+    }
+    if (seq_time > farm_time) {
+        diff5 = seq_time - farm_time;
+        perc5 = diff5 / seq_time * 100.0;
+    } else {
+        diff5 = farm_time - seq_time;
+        perc5 = diff5 / farm_time * 100.0;
+    }
+    if (pipe_time > farm_time) {
+        diff6 = pipe_time - farm_time;
+        perc6 = diff6 / pipe_time * 100.0;
+    } else {
+        diff6 = farm_time - pipe_time;
+        perc6 = diff6 / farm_time * 100.0;
+    }
+*/
     cout << fixed;
     cout << "-- Performance statistics --\n";
-    cout << "Difference between sequential and comp:     " << diff1 << "(ms) " << setprecision(2) << perc1 << "%\n";
-    cout << "Difference between pipeline and comp:       " << setprecision(6) << diff2 << "(ms) " << setprecision(2) << perc2 << "%\n";
-    cout << "Difference between sequential and pipeline: " << setprecision(6) << diff3 << "(ms) " << setprecision(2) << perc3 << "%\n";
+    cout << "Difference between sequential and comp:     " << diff1 << "(ms) \t" << setprecision(2) << perc1 << "%\n";
+    cout << "Difference between pipeline and comp:       " << setprecision(6) << diff2 << "(ms) \t" << setprecision(2) << perc2 << "%\n";
+//    cout << "Difference between farm and comp:           " << setprecision(6) << diff4 << "(ms) \t" << setprecision(2) << perc4 << "%\n";
+    cout << "Difference between sequential and pipeline: " << setprecision(6) << diff3 << "(ms) \t" << setprecision(2) << perc3 << "%\n";
+//    cout << "Difference between sequential and farm:     " << setprecision(6) << diff5 << "(ms) \t" << setprecision(2) << perc5 << "%\n";
+//    cout << "Difference between pipeline and farm:       " << setprecision(6) << diff6 << "(ms) \t" << setprecision(2) << perc6 << "%\n";
+
+//TODO:end
+
+    // Consistency
+
     cout << "Checking consistency between the result sets...\n";
     size_t i=0;
     bool consistence = true;
-    while (i<comp_result_set.size() && i<seq_result_set.size() && consistence) {
-        if (comp_result_set[i] != seq_result_set[i] || comp_result_set[i] != pipe_result_set[i]) consistence = false;
+    while (i<comp_result_set.size() && i<seq_result_set.size() && i<pipe_result_set.size() /*&& i<farm_result_set.size()*/ && consistence) {
+//        cout << setprecision(20) << comp_result_set[i] << " " << seq_result_set[i] << " " << pipe_result_set[i] << " " << farm_result_set[i] << "\n";
+        if (comp_result_set[i] != seq_result_set[i] || comp_result_set[i] != pipe_result_set[i] /* || comp_result_set[i] != farm_result_set[i]*/)
+            consistence = false;
         i++;
     }
     if (consistence) cout << "The results are consistent" << endl;
