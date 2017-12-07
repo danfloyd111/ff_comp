@@ -11,7 +11,7 @@ CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I /home/dan/fastflow
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
-all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test pipeline_benchmark
+all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark
 
 basic_test: test/basic_test.cpp
 	$(DIR_TEST)
@@ -37,13 +37,13 @@ farm_test: test/farm_test.cpp
 	@test/bin/farm_test
 	@echo ""
 
-pipeline_benchmark: test/pipeline_benchmark.cpp
+comp_benchmark: test/comp_benchmark.cpp
 	$(DIR_TEST)
-	@echo "Compiling pipeline_benchmark sources..."
-	@$(CC) $(CFLAGS) test/pipeline_benchmark.cpp -o test/bin/pipeline_benchmark
+	@echo "Compiling comp_benchmark sources..."
+	@$(CC) $(CFLAGS) test/comp_benchmark.cpp -o test/bin/comp_benchmark
 	@echo "Done!"
-	@echo "Run this benchmark with \"test/bin/pipeline_benchmark.sh\""
-	@test/bin/pipeline_benchmark -h
+	@echo "Run this benchmark with \"test/comp_benchmark.sh\""
+	@test/bin/comp_benchmark -h
 	@echo ""
 
 pipeline_nested_test: test/pipeline_nested_test.cpp

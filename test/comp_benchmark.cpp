@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         try {
             switch (param) {
             case 'h':
-                cout << "Usage: pipeline_benchmark.sh [-c number of cores] [-r parallelism grain] [-s data set size]" << endl;
+                cout << "Usage: comp_benchmark.sh [-c number of cores] [-r parallelism grain] [-s data set size]" << endl;
                 return EXIT_SUCCESS;
             case 'c':
                 CORES_NUM = stoi(optarg);
