@@ -4,7 +4,7 @@
 
 handler(){
     echo " Killing comp_benchmark with PID: $PID"
-    @kill  $PID
+    kill  $PID
 }
 
 trap handler INT
