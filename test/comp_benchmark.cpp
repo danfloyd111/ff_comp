@@ -30,6 +30,8 @@ unsigned long RUNS = 1000;     // default computation grain
 // Helper functions (definitions are at the bottom of this file)
 
 double sequentializer(double, unsigned long, std::function<double(double)>);
+inline double diff(double a, double b) { double res; (a>b) ? res = (a-b) : res = (b-a); return res; }
+inline float diff_perc(double a, double b) { double res; (a>b) ? res = (a-b) / a : res = (b-a) / b; return res*100.0; }
 
 // Farm Emitter
 
@@ -345,68 +347,19 @@ int main(int argc, char **argv) {
     auto farm_time = ((std::chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
     cout << "Done! [Elapsed time: " << farm_time << "(ms)]" << endl;
 */
-//TODO: Refactorize all the code until TODO:end, use functions to calculate diffs and percs and to print statistics
 
     // performance evaluation
 
-    double diff1, diff2, diff3, diff4, diff5, diff6;
-    float perc1, perc2, perc3, perc4, perc5, perc6;
-    if (comp_time > seq_time) {
-        diff1 = comp_time - seq_time;
-        perc1 = diff1 / comp_time * 100.0;
-    } else {
-        diff1 = seq_time - comp_time;
-        perc1 = diff1 / seq_time * 100.0;
-    }
-    if (pipe_time > comp_time) {
-        diff2 = pipe_time - comp_time;
-        perc2 = diff2 / pipe_time * 100.0;
-    } else {
-        diff2 = comp_time - pipe_time;
-        perc2 = diff2 / comp_time * 100.0;
-    }
-    if (pipe_time > seq_time) {
-        diff3 = pipe_time - seq_time;
-        perc3 = diff3 / pipe_time * 100.0;
-    } else {
-        diff3 = seq_time - pipe_time;
-        perc3 = diff3 / seq_time * 100.0;
-    }
-/*
-    if (farm_time > comp_time) {
-        diff4 = farm_time - comp_time;
-        perc4 = diff4 / farm_time * 100.0;
-    } else {
-        diff4 = comp_time - farm_time;
-        perc4 = diff4 / comp_time * 100.0;
-    }
-    if (seq_time > farm_time) {
-        diff5 = seq_time - farm_time;
-        perc5 = diff5 / seq_time * 100.0;
-    } else {
-        diff5 = farm_time - seq_time;
-        perc5 = diff5 / farm_time * 100.0;
-    }
-    if (pipe_time > farm_time) {
-        diff6 = pipe_time - farm_time;
-        perc6 = diff6 / pipe_time * 100.0;
-    } else {
-        diff6 = farm_time - pipe_time;
-        perc6 = diff6 / farm_time * 100.0;
-    }
-*/
     cout << fixed;
     cout << "-- Performance statistics --\n";
-    cout << "Difference between sequential and comp:     " << diff1 << "(ms) \t" << setprecision(2) << perc1 << "%\n";
-    cout << "Difference between pipeline and comp:       " << setprecision(6) << diff2 << "(ms) \t" << setprecision(2) << perc2 << "%\n";
+    cout << "Difference between sequential and comp:     " << diff(seq_time,comp_time) << "(ms) \t" << setprecision(2) << diff_perc(seq_time,comp_time) << "%\n";
+    cout << "Difference between pipeline and comp:       " << setprecision(6) << diff(pipe_time,comp_time) << "(ms) \t" << setprecision(2) << diff_perc(pipe_time,comp_time) << "%\n";
 //    cout << "Difference between farm and comp:           " << setprecision(6) << diff4 << "(ms) \t" << setprecision(2) << perc4 << "%\n";
-    cout << "Difference between sequential and pipeline: " << setprecision(6) << diff3 << "(ms) \t" << setprecision(2) << perc3 << "%\n";
+    cout << "Difference between sequential and pipeline: " << setprecision(6) << diff(seq_time,pipe_time) << "(ms) \t" << setprecision(2) << diff_perc(seq_time,pipe_time) << "%\n";
 //    cout << "Difference between sequential and farm:     " << setprecision(6) << diff5 << "(ms) \t" << setprecision(2) << perc5 << "%\n";
 //    cout << "Difference between pipeline and farm:       " << setprecision(6) << diff6 << "(ms) \t" << setprecision(2) << perc6 << "%\n";
 
-//TODO:end
-
-    // Consistency
+    // consistency check
 
     cout << "Checking consistency between the result sets...\n";
     size_t i=0;
