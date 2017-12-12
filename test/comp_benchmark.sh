@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Bash script used for displaying a spinner while waiting for the pipeline_benchmark to finish
+# Bash script used for displaying a spinner while waiting for the comp_benchmark to finish
 
 handler(){
     echo " Killing comp_benchmark with PID: $PID"
