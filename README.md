@@ -1,19 +1,21 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This README document all the necessary steps to get this application up and running.
 
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* Quick summary:
+TODO:Paste here the abstract of the thesis.
+
+* Version 0.1
 
 ### How do I get set up? ###
 
-* **Dependencies:** A C++ compiler std11 compliant (g++, icpc, ...) and the FastFlow library.
-* **Configuration:** 
+* **Dependencies:**
+A C++ compiler std11 compliant (g++, icpc, ...) and the FastFlow library.
+* **Configuration:**
+> *Note:* the actual makefile is used only for personal debug and test and it will change in the next release
 * **How to run tests:**
-* **Deployment instructions:**
 
 ### Contribution guidelines ###
 
@@ -23,5 +25,5 @@ This README would normally document whatever steps are necessary to get your app
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* **Repo owner:** Daniele Paolini, daniele.paolini@hotmail.it
+* **Community or team contact:** FastFlow [core team and contributors](http://calvados.di.unipi/docuwiki/doku.php/ffnamespace:people)
