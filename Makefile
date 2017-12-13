@@ -1,13 +1,21 @@
 # This is a custom Makefile created to speed up the developing process, it will not be included in the final release
 # Author: Daniele Paolini, daniele.paolini@hotmail.it
 
-# NOTE: remember to update $PATH with icpc location before make anything (source /opt/intel/.....etc)
+# NOTE: remember to update $PATH with icpc location before make anything (source /opt/intel/INSTALL_DIR/bin/psxevars.sh)
+# where INSTALL_DIR is the directory in wich the binaries of Intel Compiler is contained. As alternative of using icpc
+# consider to use g++ by simply modify the CC variable to g++.
+
+# IMPORTANT: remember to change FFDIR variable to the actual path of FastFlow headers
+
+# NOTE: I use icpc to compile this code, so using g++ may lead to some not critical compiler warnings, feel free to
+# modify CFLAGS variable in order to suit your needs.
 
 .PHONY = all clean
 
 CC = icpc
+FFDIR = /home/dan/fastflow
 
-CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I /home/dan/fastflow
+CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I $(FFDIR)
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
