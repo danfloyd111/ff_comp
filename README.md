@@ -5,7 +5,7 @@ This README document all the necessary steps to get this application up and runn
 ### What is this repository for? ###
 
 * Quick summary:    
-**TODO:**Paste here the abstract of the thesis.
+**TODO:** paste here the abstract of the thesis.
 
 * Version 0.1
 
@@ -25,5 +25,5 @@ A C++ compiler std11 compliant (g++, icpc, ...) and the FastFlow library.
 
 ### Who do I talk to? ###
 
-* **Repo owner:** Daniele Paolini, daniele.paolini@hotmail.it
+* **Repo owner:** Daniele Paolini, [Git Hub](https://github.com/danfloyd111), [Bit Bucket](https://bitbucket.org/danpaol), mail at d.paolini1@studenti.unipi.it
 * **Community or team contact:** FastFlow [core team and contributors](http://calvados.di.unipi.it/dokuwiki/doku.php/ffnamespace:people)
