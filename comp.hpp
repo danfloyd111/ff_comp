@@ -2,8 +2,9 @@
  *  Author: Daniele Paolini, daniele.paolini@hotmail.it
  * 
  *  This file implements the composition construct, see the docs for further informations.
- *  NOTE: It hasn't node cleanup utility because ff_node class hasn't a copy constructor and maybe the nodes that user needs to compose are 
- *  "owned" by a pipeline or a farm, so deleting them may be leading to double deletions if "node_cleanup" flag is set on these objects.
+ *  NOTE: It hasn't node cleanup utility because the nodes that user needs to compose are 
+ *  likely to be "owned" by a pipeline or a farm, so deleting them may be leading to double 
+ *  deletions if "node_cleanup" flag is set on these objects.
  *
 */
 
@@ -53,7 +54,7 @@ namespace ff {
         int add_stage(ff_node *stage);
         const svector<ff_node *>& get_stages() const { return nodes; };
          // init task is the inital task submitted to comp, ex: f(g(h(init_task))), if init_task is null h (in this example) is a function that
-         // takes no input (emitter, constant function, ...)
+         // takes no input (single emitter, constant function, ...)
         void *run(void *init_task=nullptr);
         double ff_time() { return ((std::chrono::duration<double, std::milli>) (cend-cstart)).count(); } // Misures run time
 
