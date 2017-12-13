@@ -279,6 +279,8 @@ int main(int argc, char **argv) {
     }
 
     // farm test
+    // NOTE: this part of the benchmark needs more test and a review and it may be useless for the final results,
+    // at this time is no more than an exercise
 
     Emitter femitter(data_set);
     Collector feven_collector(false), fodd_collector(true);
@@ -332,7 +334,6 @@ int main(int argc, char **argv) {
     bool consistence = true;
     if(farm_result_set.size() != seq_result_set.size()) consistence = false;
     while (i<comp_result_set.size() && i<seq_result_set.size() && i<pipe_result_set.size() && consistence) {
-//        cout << setprecision(20) << comp_result_set[i] << " " << seq_result_set[i] << " " << pipe_result_set[i] << " " << farm_result_set[i] << "\n";
         if (comp_result_set[i] != seq_result_set[i] || comp_result_set[i] != pipe_result_set[i])
             consistence = false;
         i++;
