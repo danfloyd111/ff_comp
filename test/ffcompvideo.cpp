@@ -1,4 +1,3 @@
-/* -*- Mode: C++; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ***************************************************************************
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as 
@@ -23,7 +22,7 @@
  *  the GNU General Public License.
  *
  ****************************************************************************
- *
+ */
 
 /*
  * Author: Marco Danelutto <marcod@di.unipi.it> - Original author
@@ -38,7 +37,9 @@
 */
 
 #include <opencv2/opencv.hpp>
+#include <ff/utils.hpp>
 #include <ff/pipeline.hpp>
+#include <unistd.h>
 
 using namespace ff;
 using namespace cv;
@@ -78,7 +79,7 @@ struct Stage1 : ff_node_t<Mat> {
   Mat *svc(Mat *frame) {
     Mat frame1;
     GaussianBlur(*frame, frame1, Size(0,0), 3);
-    addWeigthed(*frame, 1.5, frame1, -0.5, 0, *frame);
+    addWeighted(*frame, 1.5, frame1, -0.5, 0, *frame);
     return frame;
   }
 
@@ -111,7 +112,7 @@ struct Drain : ff_node_t<Mat> {
   Mat *svc(Mat *frame) {
     if (outvideo) {
       imshow("edges", *frame);
-      waitkey(30);
+      waitKey(30);
     }
     delete frame;
     return GO_ON;
@@ -127,8 +128,50 @@ protected:
 // fixed number of parameters, run this program with: ffcompvideo input.avi [-o output.avi]
 int main(int argc, char *argv[]) {
 
+  string out_video_path, in_video_path;
+
+  // input validation
+  
+  if (argc < 2) {
+    cerr << "Error: you must provide a video input" << endl;
+    cout << "Usage: ./ffcompvideo INPUT_VIDEO [-o OUTPUT_VIDEO]" << endl;
+    return EXIT_FAILURE;
+  }
+    
+  int param;
+  const char *pattern = "ho:";
+  while ((param = getopt(argc, argv, pattern)) != -1) {
+    switch (param) {
+    case 'h':
+      cout << "Usage: ./ffcompvideo INPUT_VIDEO [-o OUTPUT_VIDEO]" << endl;
+      return EXIT_SUCCESS;
+    case 'o':
+      out_video_path = optarg;
+      cout << "Writing video to " << optarg << endl;
+      break;
+    case '?':
+      if (optopt == 'o')
+	cerr << "Error: option -" << optopt << " requires an argument" << endl;
+      else if (isprint(optopt))
+	cerr << "Error: unknown option -" << optopt << endl;
+      else
+	cerr << "Error: unkonw option character" << endl;
+      return EXIT_FAILURE;
+    default:
+      cerr << "Error: parsing command line" << endl;
+      return EXIT_FAILURE;
+    }
+  }
+
+  in_video_path = argv[optind];
+
+  // test
+
+  cout << "in:  " << in_video_path << endl;
+  cout << "out: " << out_video_path << endl;
+
   Mat edges;
 
-  return 0;
+  return EXIT_SUCCESS;
 
 }
