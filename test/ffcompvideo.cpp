@@ -40,6 +40,7 @@
 #include <ff/utils.hpp>
 #include <ff/pipeline.hpp>
 #include <unistd.h>
+#include "../comp.hpp"
 
 using namespace ff;
 using namespace cv;
@@ -128,6 +129,8 @@ protected:
 // fixed number of parameters, run this program with: ffcompvideo input.avi [-o output.avi]
 int main(int argc, char *argv[]) {
 
+  Mat edges;
+  
   string out_video_path, in_video_path;
 
   // input validation
@@ -165,12 +168,30 @@ int main(int argc, char *argv[]) {
 
   in_video_path = argv[optind];
 
+  cout << "Applying both enhance and emboss filters" << endl;
+
+  // TODO: chrono to measure times
+  
+  ff_comp comp;
+  ff_pipeline pipe;
+  Source source(in_video_path);
+  Stage1 stage1;
+  Stage2 stage2;
+  Drain drain(true); // make this modular with -o option
+  comp.add_stage(&stage1);
+  comp.add_stage(&stage2);
+  pipe.add_stage(&source);
+  pipe.add_stage(&comp);
+  pipe.add_stage(&drain);
+  if (pipe.run_and_wait_end()<0) {
+    error("running pipeline");
+    return EXIT_FAILURE;
+  }
+  
   // test
 
   cout << "in:  " << in_video_path << endl;
   cout << "out: " << out_video_path << endl;
-
-  Mat edges;
 
   return EXIT_SUCCESS;
 
