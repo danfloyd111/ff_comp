@@ -19,7 +19,7 @@ CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I $(FFDIR)
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
-all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark
+all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark inner_comp_test
 
 basic_test: test/basic_test.cpp
 	$(DIR_TEST)
@@ -68,6 +68,14 @@ pipeline_test: test/pipeline_test.cpp
 	@$(CC) $(CFLAGS) test/pipeline_test.cpp -o test/bin/pipeline_test
 	@echo "Done!"
 	@test/bin/pipeline_test
+	@echo ""
+
+inner_comp_test: test/inner_comp_test.cpp
+	$(DIR_TEST)
+	@echo "Compiling inner_comp_test sources..."
+	@$(CC) $(CFLAGS) test/inner_comp_test.cpp -o test/bin/inner_comp_test
+	@echo "Done!"
+	@test/bin/inner_comp_test
 	@echo ""
 
 clean:
