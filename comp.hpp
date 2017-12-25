@@ -45,7 +45,7 @@ namespace ff {
 
     protected:
         void *svc(void *) { return nullptr; }
-        int svc_init() { return -1; }
+        int svc_init() { return 0; }
         void svc_end() { }
 
     public:
