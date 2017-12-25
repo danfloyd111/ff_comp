@@ -78,13 +78,12 @@ int main() {
     drain.clear_data();
     for (int i=0; i<results.size(); i++) assert(results[i]==(i+1)*2+1);
     cout << "PASSED [Elapsed time: " << pipe.ffTime() << "(ms)]" << endl;
-    
-    /* TODO: farm test (?)
+
+/*  TODO: farm test (?)
 
     vector<ff_node *> workers;
     workers.push_back(new ff_comp());
     workers.push_back(new ff_comp());
-    Emitter emitter;
     Stage1 stageA;
     Stage2 stageB;
     ((ff_comp*)workers[0])->add_stage(&stage2);
@@ -94,7 +93,7 @@ int main() {
     ff_farm<> farm(workers);
     farm.cleanup_all();
     ff_pipeline pipe2;
-    pipe2.add_stage(&emitter);
+    pipe2.add_stage(&source);
     //pipe2.add_stage(&farm);
     pipe2.add_stage(&drain);        
     cout << "Executing inner comp test with a farm..." << endl;
@@ -109,7 +108,7 @@ int main() {
     for (int i=0; i<results.size(); i++) cout << results[i] << endl;//assert(results[i]==(i+1)*2+1);
     cout << "PASSED [Elapsed time: " << pipe2.ffTime() << "(ms)]" << endl;
 
-    */
+*/
 
     return EXIT_SUCCESS;
 
