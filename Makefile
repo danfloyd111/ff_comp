@@ -19,7 +19,7 @@ CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I $(FFDIR)
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
-all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark inner_comp_test
+all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark inner_comp_test ffcompvideo
 
 basic_test: test/basic_test.cpp
 	$(DIR_TEST)
@@ -45,15 +45,6 @@ farm_test: test/farm_test.cpp
 	@test/bin/farm_test
 	@echo ""
 
-comp_benchmark: test/comp_benchmark.cpp
-	$(DIR_TEST)
-	@echo "Compiling comp_benchmark sources..."
-	@$(CC) $(CFLAGS) test/comp_benchmark.cpp -o test/bin/comp_benchmark
-	@echo "Done!"
-	@echo "Run this benchmark with \"test/comp_benchmark.sh\""
-	@test/bin/comp_benchmark -h
-	@echo ""
-
 pipeline_nested_test: test/pipeline_nested_test.cpp
 	$(DIR_TEST)
 	@echo "Compiling pipeline_nested_test sources..."
@@ -76,6 +67,24 @@ inner_comp_test: test/inner_comp_test.cpp
 	@$(CC) $(CFLAGS) test/inner_comp_test.cpp -o test/bin/inner_comp_test
 	@echo "Done!"
 	@test/bin/inner_comp_test
+	@echo ""
+
+comp_benchmark: test/comp_benchmark.cpp
+	$(DIR_TEST)
+	@echo "Compiling comp_benchmark sources..."
+	@$(CC) $(CFLAGS) test/comp_benchmark.cpp -o test/bin/comp_benchmark
+	@echo "Done!"
+	@echo "Run this benchmark with \"test/comp_benchmark.sh\""
+	@test/bin/comp_benchmark -h
+	@echo ""
+
+ffcompvideo: test/ffcompvideo.cpp
+	$(DIR_TEST)
+	@echo "Compiling ffcompvideo sources..."
+	@icpc -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffcompvideo.cpp -o test/bin/ffcompvideo `pkg-config --libs opencv` -pthread
+	@echo "Done!"
+	@echo "Run this benchmark with \"test/bin/ffcompvideo\""
+	@test/bin/ffcompvideo -h
 	@echo ""
 
 clean:
