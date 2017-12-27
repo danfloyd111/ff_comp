@@ -33,6 +33,7 @@
  * It's basically the same program placed under fastflow/examples/OpenCVvideo/ffvideo.cpp
  * but instead of testing a "pure pipeline": pipe(Source, Stage1, Stage2, Drain) it will
  * be tested a pipeline with an inner comp: pipe(Source, Comp(Stage1, Stage2), Drain).
+ * (-v option: visualize output video)
  *
 */
 
@@ -40,6 +41,7 @@
 #include <ff/utils.hpp>
 #include <ff/pipeline.hpp>
 #include <unistd.h>
+#include <chrono>
 #include "../comp.hpp"
 
 using namespace ff;
@@ -51,8 +53,14 @@ using namespace std;
 struct Source : ff_node_t<Mat> {
 
   const string filename;
+  int frames;
 
   Source(const string filename) : filename(filename) { }
+
+  int svc_init() {
+    frames = 0;
+    return 0;
+  }
 
   Mat *svc(Mat *) {
     VideoCapture cap(filename.c_str());
@@ -62,6 +70,7 @@ struct Source : ff_node_t<Mat> {
     }
     for(;;) {
       Mat *frame = new Mat();
+      frames++;
       if(cap.read(*frame)) ff_send_out(frame);
       else {
 	cout << "End of stream in input" << endl;
@@ -70,6 +79,9 @@ struct Source : ff_node_t<Mat> {
     }
     return EOS;
   }
+
+public:
+  int get_processed_frames() { return frames; } // TODO: check if this has to be const
 
 };
 
@@ -131,32 +143,33 @@ int main(int argc, char *argv[]) {
 
   Mat edges;
   
-  string out_video_path, in_video_path;
+  string in_video_path;
+  bool out_video_flag = false;
 
   // input validation
   
   if (argc < 2) {
     cerr << "Error: you must provide a video input" << endl;
-    cout << "Usage: ./ffcompvideo INPUT_VIDEO [-o OUTPUT_VIDEO]" << endl;
+    cout << "Usage: ./ffcompvideo INPUT_VIDEO [-v]" << endl;
     return EXIT_FAILURE;
   }
     
   int param;
-  const char *pattern = "ho:";
+  const char *pattern = "hv";
   while ((param = getopt(argc, argv, pattern)) != -1) {
     switch (param) {
     case 'h':
-      cout << "Usage: ./ffcompvideo INPUT_VIDEO [-o OUTPUT_VIDEO]" << endl;
+      cout << "Usage: ./ffcompvideo INPUT_VIDEO [-v]" << endl;
       return EXIT_SUCCESS;
-    case 'o':
-      out_video_path = optarg;
-      cout << "Writing video to " << optarg << endl;
+    case 'v':
+      out_video_flag = true;
+      cout << "Visualizing output video..." << endl;
       break;
     case '?':
-      if (optopt == 'o')
+      if (optopt == 'v')
 	cerr << "Error: option -" << optopt << " requires an argument" << endl;
       else if (isprint(optopt))
-	cerr << "Error: unknown option -" << optopt << endl;
+	cerr << "Error: unknown option -" << (char) optopt << endl;
       else
 	cerr << "Error: unkonw option character" << endl;
       return EXIT_FAILURE;
@@ -168,31 +181,35 @@ int main(int argc, char *argv[]) {
 
   in_video_path = argv[optind];
 
-  cout << "Applying both enhance and emboss filters" << endl;
-
-  // TODO: chrono to measure times
+  cout << "Applying both enhance and emboss filters (it may take a while...)" << endl;
   
   ff_comp comp;
   ff_pipeline pipe;
   Source source(in_video_path);
   Stage1 stage1;
   Stage2 stage2;
-  Drain drain(true); // make this modular with -o option
+  Drain drain(out_video_flag);
   comp.add_stage(&stage1);
   comp.add_stage(&stage2);
   pipe.add_stage(&source);
   pipe.add_stage(&comp);
   pipe.add_stage(&drain);
+  
+  chrono::time_point<chrono::system_clock> chrono_start = chrono::system_clock::now();
   if (pipe.run_and_wait_end()<0) {
     error("running pipeline");
     return EXIT_FAILURE;
   }
-  
-  // test
+  chrono::time_point<chrono::system_clock> chrono_stop = chrono::system_clock::now();
 
-  cout << "in:  " << in_video_path << endl;
-  cout << "out: " << out_video_path << endl;
+  double frames = (double) source.get_processed_frames();
+  auto elapsed_time = ((chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
 
+  // cout elapsed time and average time per frame time/frames
+  cout << "Elapsed time: " << elapsed_time << "(ms)" << endl;
+  cout << "Average time per frame: " << elapsed_time / frames << "(ms)" << endl; 
+  cout << "(with " << frames << " frames)" << endl;
+  cout << "Done!" << endl;
   return EXIT_SUCCESS;
 
 }
