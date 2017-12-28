@@ -38,7 +38,6 @@
 */
 
 #include <opencv2/opencv.hpp>
-#include <ff/utils.hpp>
 #include <ff/pipeline.hpp>
 #include <unistd.h>
 #include <chrono>
@@ -49,7 +48,6 @@ using namespace cv;
 using namespace std;
 
 // Reads frames and sends them to the next stage
-// TODO: consider to change this into a plain old ff_node if this version do not works
 struct Source : ff_node_t<Mat> {
 
   const string filename;
@@ -81,12 +79,11 @@ struct Source : ff_node_t<Mat> {
   }
 
 public:
-  int get_processed_frames() { return frames; } // TODO: check if this has to be const
+  int get_processed_frames() { return frames; }
 
 };
 
 // This stage applies the GaussianBlur filter and sends the result to the next stage
-//TODO: consider to change this into a plain old ff_node if this version do not works
 struct Stage1 : ff_node_t<Mat> {
 
   Mat *svc(Mat *frame) {
@@ -99,7 +96,6 @@ struct Stage1 : ff_node_t<Mat> {
 };
 
 // This stage applies the Sobel filter and sends the result to the next stage
-// TODO: consider to change this into a plain old ff_node if this version do not works
 struct Stage2 : ff_node_t<Mat> {
 
   Mat *svc(Mat *frame) {
@@ -110,9 +106,6 @@ struct Stage2 : ff_node_t<Mat> {
 };
 
 // This stage shows the output
-// TODO: consider to change this into a plain old ff_node if this version do not works
-// TODO: instead of showing the output in a frame consider to write the video into a file
-//       which name is chosen by the user with an option
 struct Drain : ff_node_t<Mat> {
 
   Drain(bool ovf) : outvideo(ovf) { }
@@ -145,8 +138,6 @@ int main(int argc, char *argv[]) {
   
   string in_video_path;
   bool out_video_flag = false;
-
-  // input validation
   
   if (argc < 2) {
     cerr << "Error: you must provide a video input" << endl;
@@ -205,10 +196,10 @@ int main(int argc, char *argv[]) {
   double frames = (double) source.get_processed_frames();
   auto elapsed_time = ((chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
 
-  // cout elapsed time and average time per frame time/frames
   cout << "Elapsed time: " << elapsed_time << "(ms)" << endl;
   cout << "Average time per frame: " << elapsed_time / frames << "(ms)" << endl; 
   cout << "(with " << frames << " frames)" << endl;
+  cout << "Inner Comp Time: " << comp.ff_time() << "(ms)" <<  endl;
   cout << "Done!" << endl;
   return EXIT_SUCCESS;
 
