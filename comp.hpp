@@ -79,7 +79,7 @@ namespace ff {
             _in = _out;
         }
         cend = std::chrono::system_clock::now();
-	    time_elapsed = time_elapsed + ((std::chrono::duration<double, std::milli>) (cend-cstart)).count();
+        time_elapsed += ((std::chrono::duration<double, std::milli>) (cend-cstart)).count();
         return _out;
     }
 
