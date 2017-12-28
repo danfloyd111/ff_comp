@@ -37,99 +37,11 @@
  *
 */
 
-#include <opencv2/opencv.hpp>
-#include <ff/pipeline.hpp>
-#include <unistd.h>
-#include <chrono>
-#include "../comp.hpp"
+#include "ffvideo.hpp" // definition of ff stages are in this header, please have a look
 
 using namespace ff;
 using namespace cv;
 using namespace std;
-
-// Reads frames and sends them to the next stage
-struct Source : ff_node_t<Mat> {
-
-  const string filename;
-  int frames;
-
-  Source(const string filename) : filename(filename) { }
-
-  int svc_init() {
-    frames = 0;
-    return 0;
-  }
-
-  Mat *svc(Mat *) {
-    VideoCapture cap(filename.c_str());
-    if (!cap.isOpened()) {
-      cerr << "Error: opening input file" << endl;
-      return EOS;
-    }
-    for(;;) {
-      Mat *frame = new Mat();
-      frames++;
-      if(cap.read(*frame)) ff_send_out(frame);
-      else {
-	cout << "End of stream in input" << endl;
-	break;
-      }
-    }
-    return EOS;
-  }
-
-public:
-  int get_processed_frames() { return frames; }
-
-};
-
-// This stage applies the GaussianBlur filter and sends the result to the next stage
-struct Stage1 : ff_node_t<Mat> {
-
-  Mat *svc(Mat *frame) {
-    Mat frame1;
-    GaussianBlur(*frame, frame1, Size(0,0), 3);
-    addWeighted(*frame, 1.5, frame1, -0.5, 0, *frame);
-    return frame;
-  }
-
-};
-
-// This stage applies the Sobel filter and sends the result to the next stage
-struct Stage2 : ff_node_t<Mat> {
-
-  Mat *svc(Mat *frame) {
-    Sobel(*frame, *frame, -1, 1, 0, 3);
-    return frame;
-  }
-
-};
-
-// This stage shows the output
-struct Drain : ff_node_t<Mat> {
-
-  Drain(bool ovf) : outvideo(ovf) { }
-
-  int svc_init() {
-    if (outvideo) namedWindow("edges",1);
-    return 0;
-  }
-
-  Mat *svc(Mat *frame) {
-    if (outvideo) {
-      imshow("edges", *frame);
-      waitKey(30);
-    }
-    delete frame;
-    return GO_ON;
-  }
-  
-protected:
-  const bool outvideo;
-
-};
-
-/********************************************************************************************/
 
 // fixed number of parameters, run this program with: ffcompvideo input.avi [-o output.avi]
 int main(int argc, char *argv[]) {
