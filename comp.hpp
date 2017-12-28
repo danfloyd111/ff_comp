@@ -41,6 +41,7 @@ namespace ff {
         svector<ff_node *> decompose(ff_node* node);
         std::chrono::time_point<std::chrono::system_clock> cstart;
         std::chrono::time_point<std::chrono::system_clock> cend;
+        double time_elapsed;
 
 
     protected:
@@ -49,14 +50,14 @@ namespace ff {
         void svc_end() { }
 
     public:
-        ff_comp() = default;
+        ff_comp() { time_elapsed = 0; }
         ~ff_comp() = default; 
         int add_stage(ff_node *stage);
         const svector<ff_node *>& get_stages() const { return nodes; };
          // init task is the inital task submitted to comp, ex: f(g(h(init_task))), if init_task is null h (in this example) is a function that
          // takes no input (single emitter, constant function, ...)
         void *run(void *init_task=nullptr);
-        double ff_time() { return ((std::chrono::duration<double, std::milli>) (cend-cstart)).count(); } // Misures run time
+        double ff_time() { return time_elapsed;  } // Returns total run time
 
     };
 
@@ -78,6 +79,7 @@ namespace ff {
             _in = _out;
         }
         cend = std::chrono::system_clock::now();
+	    time_elapsed = time_elapsed + ((std::chrono::duration<double, std::milli>) (cend-cstart)).count();
         return _out;
     }
 
