@@ -43,7 +43,7 @@ using namespace ff;
 using namespace cv;
 using namespace std;
 
-// fixed number of parameters, run this program with: ffcompvideo input.avi [-o output.avi]
+// fixed number of stages, run this program with: ffcompvideo input.avi [-o output.avi]
 int main(int argc, char *argv[]) {
 
   Mat edges;
