@@ -19,7 +19,7 @@ CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I $(FFDIR)
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
-all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test comp_benchmark inner_comp_test ffcompvideo
+all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test inner_comp_test comp_benchmark ffcompvideo
 
 basic_test: test/basic_test.cpp
 	$(DIR_TEST)
