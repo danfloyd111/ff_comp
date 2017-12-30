@@ -56,26 +56,26 @@ struct Source : ff_node_t<Mat> {
     Source(const string filename) : filename(filename) { }
 
     int svc_init() {
-	frames = 0;
-	return 0;
+		frames = 0;
+		return 0;
     }
 
     Mat *svc(Mat *) {
-	VideoCapture cap(filename.c_str());
-	if (!cap.isOpened()) {
-	    cerr << "Error: opening input file" << endl;
-	    return EOS;
-	}
-	for (;;) {
-	    Mat *frame = new Mat();
-	    frames++;
-	    if (cap.read(*frame)) ff_send_out(frame);
-	    else {
-		cout << "End of stream in input" << endl;
-		break;
-	    }
-	}
-	return EOS;
+		VideoCapture cap(filename.c_str());
+		if (!cap.isOpened()) {
+	    	cerr << "Error: opening input file" << endl;
+	    	return EOS;
+		}
+		for (;;) {
+	    	Mat *frame = new Mat();
+	    	frames++;
+	    	if (cap.read(*frame)) ff_send_out(frame);
+	    	else {
+				cout << "End of stream in input" << endl;
+				break;
+	    	}
+		}
+		return EOS;
     }
 
 public:
@@ -87,10 +87,10 @@ public:
 struct Stage1 : ff_node_t<Mat> {
 
     Mat *svc(Mat *frame) {
-	Mat frame1;
-	GaussianBlur(*frame, frame1, Size(0,0), 3);
-	addWeighted(*frame, 1.5, frame1, -0.5, 0, *frame);
-	return frame;
+		Mat frame1;
+		GaussianBlur(*frame, frame1, Size(0,0), 3);
+		addWeighted(*frame, 1.5, frame1, -0.5, 0, *frame);
+		return frame;
     }
 
 };
@@ -99,8 +99,8 @@ struct Stage1 : ff_node_t<Mat> {
 struct Stage2 : ff_node_t<Mat> {
 
     Mat *svc(Mat *frame) {
-	Sobel(*frame, *frame, -1, 1, 0, 3);
-	return frame;
+		Sobel(*frame, *frame, -1, 1, 0, 3);
+		return frame;
     }
 };
 
@@ -110,21 +110,49 @@ struct Drain : ff_node_t<Mat> {
     Drain(bool ovf) : outvideo(ovf) { }
 
     int svc_init() {
-	if (outvideo) namedWindow("edges", 1);
-	return 0;
+		if (outvideo) namedWindow("edges", 1);
+		return 0;
     }
 
     Mat *svc(Mat *frame) {
-	if (outvideo) {
-	    imshow("edges", *frame);
-	    waitKey(30);
-	}
-	delete frame;
-	return GO_ON;
+		if (outvideo) {
+	    	imshow("edges", *frame);
+	    	waitKey(30);
+		}
+		delete frame;
+		return GO_ON;
     }
 
 protected:
     const bool outvideo;
+
+};
+
+// This node includes both Gaussian and Sobel filter and it is used for the sequential part of the test
+struct SeqNode : ff_node_t<Mat> {
+
+	int svc_init() {
+		time_elapsed = 0;
+		return 0;
+	}
+
+	Mat *svc(Mat *frame) {
+		using namespace std::chrono;
+		time_point<chrono::system_clock> cstart = system_clock::now();
+		Mat frame1;
+		GaussianBlur(*frame, frame1, Size(0,0), 3);
+		addWeighted(*frame, 1.5, frame1, -0.5, 0, *frame);
+		Sobel(*frame, *frame, -1, 1, 0, 3);
+		time_point<chrono::system_clock> cend = system_clock::now();
+		time_elapsed += ((duration<double, std::milli>) (cend-cstart)).count();
+		return frame;
+	}
+
+	private:
+	double time_elapsed;
+
+	public:
+	double ff_time() { return time_elapsed; } // returns total runtime
 
 };
 

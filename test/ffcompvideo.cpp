@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    SeqNode seq;
     ff_comp comp;
     ff_pipeline pipe, inner_pipe;
     Source source(in_video_path);
@@ -119,8 +120,7 @@ int main(int argc, char *argv[]) {
             break;
         case 1:
             cout << "Selected sequential inner stage: Pipe(Source, Seq(Stage1, Stage2), Drain)" << endl;
-            cerr << "NOT YET IMPLEMENTED!" << endl;
-            return EXIT_SUCCESS;
+            pipe.add_stage(&seq);
             break;
         case 2:
             cout << "Selected pipeline inner stage: Pipe(Source, Pipe(Stage1, Stage2, Drain)" << endl;
@@ -158,8 +158,7 @@ int main(int argc, char *argv[]) {
             cout << "Inner Comp elapsed time: " << comp.ff_time() << "(ms)\nDone!" <<  endl;
             break;
         case 1:
-            // TODO: print seq.ff_time() when its developed
-            //cout << "Inner Sequential elapsed time: " << seq.ff_time() << "(ms)\nDone!" << endl;
+            cout << "Inner Sequential elapsed time: " << seq.ff_time() << "(ms)\nDone!" << endl;
             break;
         case 2:
             cout << "Inner Pipeline elapsed time: " << inner_pipe.ffTime() << "(ms)\nDone!" << endl;
