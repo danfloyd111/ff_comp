@@ -10,6 +10,7 @@
 # store the results).
 #
 # Note: you have to run "make ffcompvideo" (or compile ffcompvideo.cpp) before running this script.
+# Note: place the video that you want to use in the same directory of this script.
 
 function print_usage {
     printf "Usage: %s [-p] runs video\n" $1
@@ -18,7 +19,13 @@ function print_usage {
     printf "    -p: executes pipeline test in addition to the others\n"
 }
 
-THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # getting and going into this script's directory
+function join_by {
+    local IFS=$1 # setting local internal field separator as first arg
+    shift # getting rid of first arg
+    echo "$*" # echoing the rest
+}
+
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # getting this script's directory
 
 if [ $# -lt 2 ]; then
     printf "Error: missing argument\n"
@@ -54,17 +61,35 @@ if [ $runs -lt 1 ]; then
     exit 1
 fi
 
+printf "Starting the benchmark with %d iterations\n" $runs
+
 for i in `seq 0 $((runs - 1))`; do
     printf "iteration number: %d\n" $i
-    bin/ffcompvideo "$video" "0" # comp run
-    bin/ffcompvideo "$video" "1" # sequential run
+    cd $THIS_DIR
+    time=`./bin/ffcompvideo "$video" "0" | grep "Inner" | awk '{print $5}'` # comp run
+    comp_array[i]=$time
+    #./bin/ffcompvideo "$video" "1" # sequential run
     if [ $pipeline_flag -eq 1 ]; then
 	bin/ffcompvideo "$video" "2" # optional pipeline run
     fi
-    # TODO: grep the relevant results here
     # TODO: print completion percentual and completion bar [#####------] 45% completed
 done
 
-# TODO: fix the dir bug (if you call this script out from /test dir the calls to bin/ffcompvideo with args will fail)
+# print average, min & max of comp test
+sum=`join_by + ${comp_array[*]} | bc -l`
+avg=`echo "scale=1; $sum / $runs" | bc -l`
+printf "Average inner Comp completion time:\t%s\n" $avg
+comp_min=${comp_array[0]}
+comp_max=${comp_array[0]}
+for i in "${comp_array[@]}"; do
+    if (( $(echo "$comp_min > $i" | bc -l) )); then
+	comp_min=$i
+    fi
+    if (( $(echo "$comp_max < $i" | bc -l) )); then
+	comp_max=$i
+    fi
+done
+printf "Minimum inner Comp completion time:\t%s\n" $comp_min
+printf "Maximum inner Comp completion time:\t%s\n" $comp_max
 
 printf "\n"
