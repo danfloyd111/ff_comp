@@ -149,19 +149,19 @@ int main(int argc, char *argv[]) {
     double frames = (double) source.get_processed_frames();
     auto elapsed_time = ((chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
 
-    cout << "Completion time: " << elapsed_time << "(ms)" << endl;
-    cout << "Average time per frame: " << elapsed_time / frames << "(ms)" << endl; 
+    cout << "Completion time: " << elapsed_time << " (ms)" << endl;
+    cout << "Average time per frame: " << elapsed_time / frames << " (ms)" << endl; 
     cout << "(with " << frames << " frames)" << endl;
     
     switch (skeleton_type) {
         case 0:
-            cout << "Inner Comp elapsed time: " << comp.ff_time() << "(ms)\nDone!" <<  endl;
+            cout << "Inner Comp completion time: " << comp.ff_time() << " (ms)\nDone!" <<  endl;
             break;
         case 1:
-            cout << "Inner Sequential elapsed time: " << seq.ff_time() << "(ms)\nDone!" << endl;
+            cout << "Inner Sequential completion time: " << seq.ff_time() << " (ms)\nDone!" << endl;
             break;
         case 2:
-            cout << "Inner Pipeline elapsed time: " << inner_pipe.ffTime() << "(ms)\nDone!" << endl;
+            cout << "Inner Pipeline completion time: " << inner_pipe.ffTime() << " (ms)\nDone!" << endl;
             break;
         default:
             cerr << "Error: this point should be inaccesible!" << endl;
