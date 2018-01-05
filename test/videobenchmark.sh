@@ -66,19 +66,26 @@ printf "Starting the benchmark with %d iterations\n" $runs
 for i in `seq 0 $((runs - 1))`; do
     printf "iteration number: %d\n" $i
     cd $THIS_DIR
-    time=`./bin/ffcompvideo "$video" "0" | grep "Inner" | awk '{print $5}'` # comp run
-    comp_array[i]=$time
-    #./bin/ffcompvideo "$video" "1" # sequential run
+    # comp run
+    printf "running comp...\n"
+    comp_time=`./bin/ffcompvideo "$video" "0" | grep "Inner" | awk '{print $5}'`
+    comp_array[i]=$comp_time
+    # seq run
+    printf "running seq...\n"
+    seq_time=`./bin/ffcompvideo "$video" "1" | grep "Inner" | awk '{print $5}'`
+    seq_array[i]=$seq_time
     if [ $pipeline_flag -eq 1 ]; then
-	bin/ffcompvideo "$video" "2" # optional pipeline run
+	# optional pipeline run
+	printf "running pipeline...\n"
+	pipe_time=`./bin/ffcompvideo "$video" "2" | grep "Inner" | awk '{print $5}'`
+	pipe_array[i]=$pipe_time
     fi
     # TODO: print completion percentual and completion bar [#####------] 45% completed
 done
 
-# print average, min & max of comp test
-sum=`join_by + ${comp_array[*]} | bc -l`
-avg=`echo "scale=1; $sum / $runs" | bc -l`
-printf "Average inner Comp completion time:\t%s\n" $avg
+# printing average, min & max of comp test
+comp_sum=`join_by + ${comp_array[*]} | bc -l`
+comp_avg=`echo "scale=1; $comp_sum / $runs" | bc -l`
 comp_min=${comp_array[0]}
 comp_max=${comp_array[0]}
 for i in "${comp_array[@]}"; do
@@ -89,7 +96,40 @@ for i in "${comp_array[@]}"; do
 	comp_max=$i
     fi
 done
-printf "Minimum inner Comp completion time:\t%s\n" $comp_min
-printf "Maximum inner Comp completion time:\t%s\n" $comp_max
+printf "Average / Min / Max inner Comp completion time (ms):\t\t%s / %s / %s\n" $comp_avg $comp_min $comp_max
+
+# printing average, min & max of seq test
+seq_sum=`join_by + ${seq_array[*]} | bc -l`
+seq_avg=`echo "scale=1; $seq_sum / $runs" | bc -l`
+seq_min=${seq_array[0]}
+seq_max=${seq_array[0]}
+for i in "${seq_array[@]}"; do
+    if (( $(echo "$seq_min > $i" | bc -l) )); then
+	seq_min=$i
+    fi
+    if (( $(echo "$seq_max < $i" | bc -l) )); then
+	seq_max=$i
+    fi
+done
+printf "Average / Min / Max inner Seq completion time (ms):\t\t%s / %s / %s\n" $seq_avg $seq_min $seq_max
+
+# printing average, min & max of pipeline test (optional)
+if [ $pipeline_flag -eq 1 ]; then
+    pipe_sum=`join_by + ${pipe_array[*]} | bc -l`
+    pipe_avg=`echo "scale=1; $pipe_sum / $runs" | bc -l`
+    pipe_min=${pipe_array[0]}
+    pipe_max=${pipe_array[0]}
+    for i in "${pipe_array[@]}"; do
+	if (( $(echo "$pipe_min > $i" | bc -l) )); then
+	    pipe_min=$i
+	fi
+	if (( $(echo "$pipe_max < $i" | bc -l) )); then
+	    pipe_max=$i
+	fi
+    done
+    printf "Average / Min / Max inner Pipeline completion time (ms):\t%s / %s / %s\n" $pipe_avg $pipe_min $pipe_max
+fi
+
+# TODO: print % differences
 
 printf "\n"
