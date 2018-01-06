@@ -26,6 +26,7 @@ function join_by {
 }
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # getting this script's directory
+export LC_NUMERIC="en_US.UTF-8" # exporting this for printing floats (weird bash)
 
 if [ $# -lt 2 ]; then
     printf "Error: missing argument\n"
@@ -67,20 +68,28 @@ for i in `seq 0 $((runs - 1))`; do
     printf "iteration number: %d\n" $i
     cd $THIS_DIR
     # comp run
-    printf "running comp...\n"
     comp_time=`./bin/ffcompvideo "$video" "0" | grep "Inner" | awk '{print $5}'`
     comp_array[i]=$comp_time
     # seq run
-    printf "running seq...\n"
     seq_time=`./bin/ffcompvideo "$video" "1" | grep "Inner" | awk '{print $5}'`
     seq_array[i]=$seq_time
     if [ $pipeline_flag -eq 1 ]; then
 	# optional pipeline run
-	printf "running pipeline...\n"
 	pipe_time=`./bin/ffcompvideo "$video" "2" | grep "Inner" | awk '{print $5}'`
 	pipe_array[i]=$pipe_time
     fi
-    # TODO: print completion percentual and completion bar [#####------] 45% completed
+    # printing completion percentual and completion bar
+    completion_perc=`echo " (($i + 1) / $runs) * 100" | bc -l`
+    completion_filler=$(( ${completion_perc%.*} / 10 ))
+    completion_bar="["
+    for j in `seq 0 $(( completion_filler - 1  ))`; do
+	completion_bar=$completion_bar#
+    done
+    for k in `seq 0 $(( 10 - completion_filler - 1  ))`; do
+	completion_bar=$completion_bar-
+    done
+    completion_bar=$completion_bar]
+    printf "%s %.1f%% completed\n" $completion_bar $completion_perc
 done
 
 # printing average, min & max of comp test
@@ -96,7 +105,7 @@ for i in "${comp_array[@]}"; do
 	comp_max=$i
     fi
 done
-printf "Average / Min / Max inner Comp completion time (ms):\t\t%s / %s / %s\n" $comp_avg $comp_min $comp_max
+printf "Average / Min / Max inner Comp completion time (ms):\t\t%.2f / %.2f / %.2f\n" $comp_avg $comp_min $comp_max
 
 # printing average, min & max of seq test
 seq_sum=`join_by + ${seq_array[*]} | bc -l`
@@ -111,7 +120,7 @@ for i in "${seq_array[@]}"; do
 	seq_max=$i
     fi
 done
-printf "Average / Min / Max inner Seq completion time (ms):\t\t%s / %s / %s\n" $seq_avg $seq_min $seq_max
+printf "Average / Min / Max inner Seq completion time (ms):\t\t%.2f / %.2f / %.2f\n" $seq_avg $seq_min $seq_max
 
 # printing average, min & max of pipeline test (optional)
 if [ $pipeline_flag -eq 1 ]; then
@@ -127,9 +136,24 @@ if [ $pipeline_flag -eq 1 ]; then
 	    pipe_max=$i
 	fi
     done
-    printf "Average / Min / Max inner Pipeline completion time (ms):\t%s / %s / %s\n" $pipe_avg $pipe_min $pipe_max
+    printf "Average / Min / Max inner Pipeline completion time (ms):\t%.2f / %.2f / %.2f\n" $pipe_avg $pipe_min $pipe_max
 fi
 
-# TODO: print % differences
+# printing % differences
+comp_seq_diff=0.00
+if (( $(echo "$comp_avg > $seq_avg" | bc -l) ))
+then
+    comp_seq_diff=`echo "(($comp_avg - $seq_avg) / $comp_avg) * 100.000" | bc -l`
+else
+    comp_seq_diff=`echo "(($seq_avg - $comp_avg) / $seq_avg) * 100.000" | bc -l`
+fi
+printf "Difference between comp and seq:\t\t\t\t%.2f%%\n" $comp_seq_diff
+if [ $pipeline_flag -eq 1 ]; then
+    # Pipeline is faster, no need to check
+    comp_pipe_diff=`echo "(($comp_avg - $pipe_avg) / $comp_avg) * 100.000" | bc -l`
+    seq_pipe_diff=`echo "(($seq_avg - $pipe_avg) / $seq_avg) * 100.000" | bc -l`
+    printf "Difference between comp and pipe:\t\t\t\t%.2f%%\n" $comp_pipe_diff
+    printf "Difference between seq and pipe:\t\t\t\t%.2f%%\n" $seq_pipe_diff
+fi
 
 printf "\n"
