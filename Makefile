@@ -19,7 +19,7 @@ CFLAGS = -O3 -Wall -pedantic -pthread -std=c++11 -I $(FFDIR)
 
 DIR_TEST = @if [ ! -d "test/bin" ]; then mkdir test/bin ; fi 
 
-all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test inner_comp_test comp_benchmark ffcompvideo
+all: basic_test pipeline_test pipeline_nested_test farm_test farm_complex_test inner_comp_test comp_benchmark ffcompvideo ffvideofarm
 
 basic_test: test/basic_test.cpp
 	$(DIR_TEST)
@@ -85,6 +85,15 @@ ffcompvideo: test/ffcompvideo.cpp
 	@echo "Done!"
 	@echo "Run this benchmark with \"test/bin/ffcompvideo\""
 	@test/bin/ffcompvideo -h
+	@echo ""
+
+ffvideofarm: test/ffvideofarm.cpp
+	$(DIR_TEST)
+	@echo "Compiling ffvideofarm sources..."
+	@icpc -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffvideofarm.cpp -o test/bin/ffvideofarm `pkg-config --libs opencv` -pthread
+	@echo "Done!"
+	@echo "Run this benchmark with \"test/bin/ffvideofarm\""
+	@test/bin/ffvideofarm -h
 	@echo ""
 
 clean:
