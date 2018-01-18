@@ -103,8 +103,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    vector<ff_comp> comps;
-    vector<ff_node*> pipes, seqs;
+    vector<ff_node*> pipes, seqs, comps;
     vector<Stage1*> s1s;
     vector<Stage2*> s2s;
     Source source(in_video_path);
@@ -119,18 +118,34 @@ int main(int argc, char *argv[]) {
     switch (skeleton_type) {
         case 0:
             // farm of comps
-            cout << "Error: not yet implemented" << endl;
-            return EXIT_SUCCESS;
+            cout << "Using comp skeleton" << endl;
+            for (int i=0; i<comp_workers_num; ++i) {
+                Stage1* temp_s1 = new Stage1();
+                Stage2* temp_s2 = new Stage2();
+                ff_comp* temp_comp = new ff_comp();
+                temp_comp->add_stage(temp_s1);
+                temp_comp->add_stage(temp_s2);
+                s1s.push_back(temp_s1);
+                s2s.push_back(temp_s2);
+                comps.push_back(temp_comp);
+            }
+            if (farm.add_workers(comps)<0) {
+                error("adding comp nodes to the farm\n");
+                return EXIT_FAILURE;
+            }
+            break;
         case 1:
             // farm of seqs
+            cout << "Using seq nodes" << endl;
             for (int i=0; i<seq_workers_num; ++i) seqs.push_back(new SeqNode());
-            if (!farm.add_workers(seqs)<0) {
+            if (farm.add_workers(seqs)<0) {
                 error("adding seq nodes to the farm\n");
                 return EXIT_FAILURE;
             }
             break;
         case 2:
             // farm of pipelines
+            cout << "Using pipeline skeleton" << endl;
             for (int i=0; i<pipe_workers_num; ++i) {
                 Stage1* temp_s1 = new Stage1();
                 Stage2* temp_s2 = new Stage2();
@@ -158,13 +173,14 @@ int main(int argc, char *argv[]) {
     cout << "Applying both enhance and emboss filters (it may take a while...)" << endl;
     if (out_video_flag) cout << "Visualizing output video..." << endl;
 
-    // TODO: statistics
     chrono::time_point<chrono::system_clock> chrono_start = chrono::system_clock::now();
     if (main_pipe.run_and_wait_end()<0) {
         error("running main pipeline\n");
         return EXIT_FAILURE;
     }
     chrono::time_point<chrono::system_clock> chrono_stop = chrono::system_clock::now();
+
+    // printing statistics
 
     double frames = (double) source.get_processed_frames();
     auto elapsed_time = ((chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
@@ -177,7 +193,7 @@ int main(int argc, char *argv[]) {
 
     switch (skeleton_type) {
         case 0:
-            cout << "comp average branch completion time not yer available" <<  endl;
+            for (int i=0; i<comps.size(); ++i) sum += ((ff_comp*)comps[i])->ff_time();
             break;
         case 1:
             for (int i=0; i<seqs.size(); ++i) sum += ((SeqNode*)seqs[i])->ff_time();
@@ -193,7 +209,8 @@ int main(int argc, char *argv[]) {
     avg = sum / seq_workers_num;
     cout << "Average branch completion time: " << avg << " (ms)\nDone!" << endl;
 
-    // TODO: clean all vectors
+    // cleaning
+
     while (!s1s.empty()) {
         delete s1s.back();
         s1s.pop_back();
@@ -209,6 +226,10 @@ int main(int argc, char *argv[]) {
     while (!seqs.empty()) {
         delete seqs.back();
         seqs.pop_back();
+    }
+    while (!comps.empty()) {
+        delete comps.back();
+        comps.pop_back();
     }
 
     return EXIT_SUCCESS;
