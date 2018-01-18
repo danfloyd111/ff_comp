@@ -46,6 +46,7 @@
 */
 
 #include "ffvideo.hpp" // definition of ff stages are in this header, please have a look
+#include <ff/farm.hpp>
 
 using namespace ff;
 using namespace cv;
@@ -56,9 +57,9 @@ int main(int argc, char *argv[]) {
 
     Mat* edges;
 
-    const int seq_workers_num = 8;
-    const int comp_workers_num = 8;
-    const int pipe_workers_num = 16;
+    const int seq_workers_num = 16;
+    const int comp_workers_num = 16;
+    const int pipe_workers_num = 8;
 
     bool out_video_flag = false;
 
@@ -102,9 +103,113 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    vector<SeqNode> seqs;
     vector<ff_comp> comps;
-    vector<ff_pipeline> pipes, inner_pipes;
+    vector<ff_node*> pipes, seqs;
+    vector<Stage1*> s1s;
+    vector<Stage2*> s2s;
+    Source source(in_video_path);
+    Drain drain(out_video_flag);
+    ff_pipeline main_pipe;
+    // using a normal farm instead of an ordered one should decrease the completion time, but the frames would be processed not in order and the
+    // result would be a flickering horrible video, so I prefer to use an ordered farm and pay a very little overhead
+    ff_ofarm farm; 
+
+    main_pipe.add_stage(&source);
+
+    switch (skeleton_type) {
+        case 0:
+            // farm of comps
+            cout << "Error: not yet implemented" << endl;
+            return EXIT_SUCCESS;
+        case 1:
+            // farm of seqs
+            for (int i=0; i<seq_workers_num; ++i) seqs.push_back(new SeqNode());
+            if (!farm.add_workers(seqs)<0) {
+                error("adding seq nodes to the farm\n");
+                return EXIT_FAILURE;
+            }
+            break;
+        case 2:
+            // farm of pipelines
+            for (int i=0; i<pipe_workers_num; ++i) {
+                Stage1* temp_s1 = new Stage1();
+                Stage2* temp_s2 = new Stage2();
+                ff_pipeline* temp_pipe = new ff_pipeline();
+                temp_pipe->add_stage(temp_s1);
+                temp_pipe->add_stage(temp_s2);
+                s1s.push_back(temp_s1);
+                s2s.push_back(temp_s2);
+                pipes.push_back(temp_pipe);
+            }
+            if (farm.add_workers(pipes)<0) {
+                error("adding pipe nodes to the farm\n");
+                return EXIT_FAILURE;
+            }
+            break;
+        default:
+            cerr << "Error: skeleton type must one of these values: 0 (comp), 1 (sequential) or 2(pipeline)" << endl;
+            cout << "Usage: ./ffvideofarm input skeleton [-v]" << endl;
+            return EXIT_FAILURE;
+    }
+
+    main_pipe.add_stage(&farm);
+    main_pipe.add_stage(&drain);
+
+    cout << "Applying both enhance and emboss filters (it may take a while...)" << endl;
+    if (out_video_flag) cout << "Visualizing output video..." << endl;
+
+    // TODO: statistics
+    chrono::time_point<chrono::system_clock> chrono_start = chrono::system_clock::now();
+    if (main_pipe.run_and_wait_end()<0) {
+        error("running main pipeline\n");
+        return EXIT_FAILURE;
+    }
+    chrono::time_point<chrono::system_clock> chrono_stop = chrono::system_clock::now();
+
+    double frames = (double) source.get_processed_frames();
+    auto elapsed_time = ((chrono::duration<double, std::milli>) (chrono_stop - chrono_start)).count();
+
+    cout << "Completion time: " << elapsed_time << " (ms)" << endl;
+    cout << "Average time per frame: " << elapsed_time / frames << " (ms)" << endl; 
+    cout << "(with " << frames << " frames)" << endl;
+
+    double sum=0, avg=0;
+
+    switch (skeleton_type) {
+        case 0:
+            cout << "comp average branch completion time not yer available" <<  endl;
+            break;
+        case 1:
+            for (int i=0; i<seqs.size(); ++i) sum += ((SeqNode*)seqs[i])->ff_time();
+            break;
+        case 2:
+            for (int i=0; i<pipes.size(); ++i) sum += ((ff_pipeline*)pipes[i])->ffTime();
+            break;
+        default:
+            cerr << "Error: this point should be inaccesible!" << endl;
+            return EXIT_FAILURE;
+    }
+
+    avg = sum / seq_workers_num;
+    cout << "Average branch completion time: " << avg << " (ms)\nDone!" << endl;
+
+    // TODO: clean all vectors
+    while (!s1s.empty()) {
+        delete s1s.back();
+        s1s.pop_back();
+    }
+    while (!s2s.empty()) {
+        delete s2s.back();
+        s2s.pop_back();
+    }
+    while (!pipes.empty()) {
+        delete pipes.back();
+        pipes.pop_back();
+    }
+    while (!seqs.empty()) {
+        delete seqs.back();
+        seqs.pop_back();
+    }
 
     return EXIT_SUCCESS;
 
