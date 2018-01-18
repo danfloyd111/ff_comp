@@ -81,7 +81,7 @@ comp_benchmark: test/comp_benchmark.cpp
 ffcompvideo: test/ffcompvideo.cpp
 	$(DIR_TEST)
 	@echo "Compiling ffcompvideo sources..."
-	@icpc -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffcompvideo.cpp -o test/bin/ffcompvideo `pkg-config --libs opencv` -pthread
+	@$(CC) -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffcompvideo.cpp -o test/bin/ffcompvideo `pkg-config --libs opencv` -pthread
 	@echo "Done!"
 	@echo "Run this benchmark with \"test/bin/ffcompvideo\""
 	@test/bin/ffcompvideo -h
@@ -90,7 +90,7 @@ ffcompvideo: test/ffcompvideo.cpp
 ffvideofarm: test/ffvideofarm.cpp
 	$(DIR_TEST)
 	@echo "Compiling ffvideofarm sources..."
-	@icpc -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffvideofarm.cpp -o test/bin/ffvideofarm `pkg-config --libs opencv` -pthread
+	@$(CC) -O3 -std=c++11 -I $(FFDIR) -Wall -pedantic `pkg-config --cflags opencv` test/ffvideofarm.cpp -o test/bin/ffvideofarm `pkg-config --libs opencv` -pthread
 	@echo "Done!"
 	@echo "Run this benchmark with \"test/bin/ffvideofarm\""
 	@test/bin/ffvideofarm -h
