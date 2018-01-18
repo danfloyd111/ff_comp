@@ -9,14 +9,20 @@
 # It will print on stdout all the resulting statistics in a well readable format (the stdout may be redirected to a file to
 # store the results).
 #
+# Using -f option will activate a final test that uses ff_comp as an inner component of a farm skeleton in order to show the
+# correct behaviour of that constuct when it's used into a larger graph of parallel executors. Please have a look to the 
+# ffvideofarm.cpp file to see how it works under the hood.
+#
 # Note: you have to run "make ffcompvideo" (or compile ffcompvideo.cpp) before running this script.
+# Note: you have to run "make ffvideofarm" (or compile ffvideofarm.cpp) in order to use -f option.
 # Note: place the video that you want to use in the same directory of this script.
 
 function print_usage {
-    printf "Usage: %s [-p] runs video\n" $1
+    printf "Usage: %s [-p] [-f] runs video\n" $1
     printf "    runs: number of times that benchmark will be executed\n"
     printf "    video: relative (to this script) path to the video\n"
     printf "    -p: executes pipeline test in addition to the others\n"
+    printf "    -f: executes a single farm test in addition to the others\n"
 }
 
 function join_by {
@@ -35,12 +41,15 @@ if [ $# -lt 2 ]; then
 fi
 
 pipeline_flag=0
+farm_flag=0
 
-while getopts ":p" opt;  do
+while getopts ":pf" opt;  do
       case $opt in
 	  p) printf "Selected pipeline mode in addition\n"
 	     pipeline_flag=1;;
-	  \?) printf "Error: illegal option -d\n" $OPTARG
+	  f) printf "Selected farm mode in addition\n"
+             farm_flag=1;;
+	  \?) printf "Error: illegal option -%c\n" $OPTARG
 	      print_usage $0
 	      exit 1;;
       esac
@@ -74,23 +83,37 @@ for i in `seq 0 $((runs - 1))`; do
     seq_time=`./bin/ffcompvideo "$video" "1" | grep "Inner" | awk '{print $5}'`
     seq_array[i]=$seq_time
     if [ $pipeline_flag -eq 1 ]; then
-	# optional pipeline run
-	pipe_time=`./bin/ffcompvideo "$video" "2" | grep "Inner" | awk '{print $5}'`
-	pipe_array[i]=$pipe_time
+	    # optional pipeline run
+	    pipe_time=`./bin/ffcompvideo "$video" "2" | grep "Inner" | awk '{print $5}'`
+	    pipe_array[i]=$pipe_time
     fi
     # printing completion percentual and completion bar
     completion_perc=`echo " (($i + 1) / $runs) * 100" | bc -l`
     completion_filler=$(( ${completion_perc%.*} / 10 ))
     completion_bar="["
     for j in `seq 0 $(( completion_filler - 1  ))`; do
-	completion_bar=$completion_bar#
+	    completion_bar=$completion_bar#
     done
     for k in `seq 0 $(( 10 - completion_filler - 1  ))`; do
-	completion_bar=$completion_bar-
+	    completion_bar=$completion_bar-
     done
     completion_bar=$completion_bar]
     printf "%s %.1f%% completed\n" $completion_bar $completion_perc
 done
+
+# optional farm test
+if [ $farm_flag -eq 1 ]; then
+    printf "\n"
+    printf "Running the optional farm test with comp branches\n"
+    ./bin/ffvideofarm "$video" "0"
+    printf "\n"
+    printf "Running the optional farm test with seq branches\n"
+    ./bin/ffvideofarm "$video" "1"
+    printf "\n"
+    printf "Running the optional farm test with pipeline branches\n"
+    ./bin/ffvideofarm "$video" "2"
+    printf "\n"
+fi    
 
 # printing average, min & max of comp test
 comp_sum=`join_by + ${comp_array[*]} | bc -l`
@@ -99,10 +122,10 @@ comp_min=${comp_array[0]}
 comp_max=${comp_array[0]}
 for i in "${comp_array[@]}"; do
     if (( $(echo "$comp_min > $i" | bc -l) )); then
-	comp_min=$i
+	    comp_min=$i
     fi
     if (( $(echo "$comp_max < $i" | bc -l) )); then
-	comp_max=$i
+	    comp_max=$i
     fi
 done
 printf "Average / Min / Max inner Comp completion time (ms):\t\t%.2f / %.2f / %.2f\n" $comp_avg $comp_min $comp_max
@@ -114,10 +137,10 @@ seq_min=${seq_array[0]}
 seq_max=${seq_array[0]}
 for i in "${seq_array[@]}"; do
     if (( $(echo "$seq_min > $i" | bc -l) )); then
-	seq_min=$i
+	    seq_min=$i
     fi
     if (( $(echo "$seq_max < $i" | bc -l) )); then
-	seq_max=$i
+	    seq_max=$i
     fi
 done
 printf "Average / Min / Max inner Seq completion time (ms):\t\t%.2f / %.2f / %.2f\n" $seq_avg $seq_min $seq_max
@@ -129,12 +152,12 @@ if [ $pipeline_flag -eq 1 ]; then
     pipe_min=${pipe_array[0]}
     pipe_max=${pipe_array[0]}
     for i in "${pipe_array[@]}"; do
-	if (( $(echo "$pipe_min > $i" | bc -l) )); then
-	    pipe_min=$i
-	fi
-	if (( $(echo "$pipe_max < $i" | bc -l) )); then
-	    pipe_max=$i
-	fi
+	    if (( $(echo "$pipe_min > $i" | bc -l) )); then
+	        pipe_min=$i
+	    fi
+	    if (( $(echo "$pipe_max < $i" | bc -l) )); then
+	        pipe_max=$i
+	    fi
     done
     printf "Average / Min / Max inner Pipeline completion time (ms):\t%.2f / %.2f / %.2f\n" $pipe_avg $pipe_min $pipe_max
 fi
