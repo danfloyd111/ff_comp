@@ -5,7 +5,6 @@
  *  Pipelining a comp constuct:
  *  Pipe(Source, Comp, Drain) where Comp = Stage1(Stage2())
  * 
- *  Tested with valgrind http://valgrind.org/info/about.html
  * 
 */
 
@@ -46,7 +45,7 @@ struct Drain : ff_node {
     vector<int> data;
     const vector<int>& get_data() const { return data; }
     void clear_data() { data.clear(); }
-    void *svc(void *t){
+    void *svc(void *t){ 
         data.push_back(*((int*)t));
         delete t;
         return GO_ON;
@@ -55,17 +54,17 @@ struct Drain : ff_node {
 
 int main() {
 
-    Source source;
-    Drain drain;
+    Source pipe_source, farm_source;
+    Drain pipe_drain, farm_drain;
     Stage1 stage1;
     Stage2 stage2;
     ff_pipeline pipe;
     ff_comp comp;
-    pipe.add_stage(&source);
+    pipe.add_stage(&pipe_source);
     comp.add_stage(&stage2);
     comp.add_stage(&stage1);
     pipe.add_stage(&comp);    
-    pipe.add_stage(&drain);
+    pipe.add_stage(&pipe_drain);
     
     // pipeline test
 
@@ -74,41 +73,55 @@ int main() {
         error("running pipeline\n");
         return EXIT_FAILURE;
     }
-    vector<int> results = drain.get_data();
-    drain.clear_data();
+    vector<int> results = pipe_drain.get_data();
+    pipe_drain.clear_data();
     for (int i=0; i<results.size(); i++) assert(results[i]==(i+1)*2+1);
     cout << "PASSED [Elapsed time: " << pipe.ffTime() << "(ms)]" << endl;
 
-/*  TODO: farm test (?)
+    // farm test
 
-    vector<ff_node *> workers;
-    workers.push_back(new ff_comp());
-    workers.push_back(new ff_comp());
-    Stage1 stageA;
-    Stage2 stageB;
-    ((ff_comp*)workers[0])->add_stage(&stage2);
-    ((ff_comp*)workers[1])->add_stage(&stageB);
-    ((ff_comp*)workers[0])->add_stage(&stage1);
-    ((ff_comp*)workers[1])->add_stage(&stageA);
-    ff_farm<> farm(workers);
-    farm.cleanup_all();
-    ff_pipeline pipe2;
-    pipe2.add_stage(&source);
-    //pipe2.add_stage(&farm);
-    pipe2.add_stage(&drain);        
-    cout << "Executing inner comp test with a farm..." << endl;
-    if (pipe2.run_and_wait_end()<0) {
-        error("running pipeline\n");
+    vector<ff_node*> workers, s1s, s2s;
+    ff_ofarm farm;
+    ff_pipeline main_pipe;
+    main_pipe.add_stage(&farm_source);
+    for (int i=0; i<4; ++i) {
+        ff_comp* temp_comp = new ff_comp();
+        Stage1* temp_s1 = new Stage1();
+        Stage2* temp_s2 = new Stage2();
+        temp_comp->add_stage(temp_s2);
+        temp_comp->add_stage(temp_s1);
+        workers.push_back(temp_comp);
+    }
+    if (farm.add_workers(workers)<0) {
+        error("adding workers to the farm\n");
         return EXIT_FAILURE;
     }
-    results.clear();
-    results = drain.get_data();
-    sort(results.begin(), results.end());
-    drain.clear_data();
-    for (int i=0; i<results.size(); i++) cout << results[i] << endl;//assert(results[i]==(i+1)*2+1);
-    cout << "PASSED [Elapsed time: " << pipe2.ffTime() << "(ms)]" << endl;
+    main_pipe.add_stage(&farm);
+    main_pipe.add_stage(&farm_drain);
+    cout << "Executing inner comp test with a farm..." << endl;
+    if (main_pipe.run_and_wait_end()<0) {
+        error("running main pipeline\n");
+        return EXIT_FAILURE;
+    }
+    vector<int> farm_results = farm_drain.get_data();
+    farm_drain.clear_data();
+    for (int i=0; i<farm_results.size(); i++) assert(farm_results[i]==(i+1)*2+1);
+    cout << "PASSED [Elapsed time: " << main_pipe.ffTime() << "(ms)]" << endl;
 
-*/
+    // cleaning
+
+    while (!s1s.empty()) {
+        delete s1s.back();
+        s1s.pop_back();
+    }
+    while (!s2s.empty()) {
+        delete s2s.back();
+        s2s.pop_back();
+    }
+    while (!workers.empty()) {
+        delete workers.back();
+        workers.pop_back();
+    }
 
     return EXIT_SUCCESS;
 
