@@ -36,7 +36,10 @@ change FFDIR and CC variables in order to suit your needs.
 If you have modified the Makefile as described directly into it then run ```make all``` to compile and run all the unit test suite.     
 If you want to run the benchmark you can run it directly with ```test/bin/comp_benchmark [options]``` or use the wrapper bash script contained into _/test_ directory with
 ```test/comp_benchmark.sh [options]```      
-**TODO:** add rules to compile and run ffcompvideo    
+You can use nearly the same rules to compile the other benchmark (```videobenchmark.sh``` and ```ffvideo.cpp```) that provides
+an use case for the Comp skeleton, it has OpenCv as dependency (you can find other info directly into the Makefile under ```ffvideo``` target).
+> **Note:** Under the ```ffcomp_bmarks/``` directory you can find some traces of the output from the benchmarks, these test has 
+been made using "Titanic" (AMD Magny Cours 24 Cores multithreaded) and "Ninja" (Xeon PHI KNL 64 cores multithreaded) provided by the Computer Science Department of University of Pisa, and my personal machine "Eve" (Intel Core i7 6700HQ 4 cores multithreaded).
      
 To compile manually the sources you need to pass at least ```-O3 -std=c++11 -pthread -I FFDIR``` where FFDIR is the path to the FastFlow headers.     
      
@@ -52,3 +55,5 @@ You can find more informations on the homepage of [FastFlow project](http://calv
 
 * **Repo owner:** Daniele Paolini - [Git Hub](https://github.com/danfloyd111), [Bit Bucket](https://bitbucket.org/danpaol), mail at d.paolini1@studenti.unipi.it
 * **Community or team contact:** FastFlow [core team and contributors](http://calvados.di.unipi.it/dokuwiki/doku.php/ffnamespace:people)
+
+Thanks to Professor Marco Danelutto, all the FastFlow team and the Computer Science department of University of Pisa for the opportunity they gave me to work on this project.
