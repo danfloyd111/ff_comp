@@ -5,7 +5,7 @@ This README document all the necessary steps to get this application up and runn
 
 ### What is this repository for? ###
 
-* **Quick summary:**    
+**Quick summary:**    
 The FastFlow framework provides to the programmer of parallel applications for multicore memory-shared devices a series of nestable skeletons that are made available as objects in C++. These objects
 can be specialized in order to form parallel applications in many forms, both stream parallel and data parallel. Before today this framework didn't have a skeleton that sequentially composes objects:
 given two code snippets that computes on their input data ```x``` the functions ```f(x)``` and ```g(x)```, FastFlow didn't have a skeleton ```Comp(f,g)``` that computes, in the binary case taken as
@@ -15,7 +15,7 @@ The purpose of this project is to implement this skeleton in a way that it can t
 business code of the Comp skeleton it has been written in the FastFlow style, it is a static header only C++ library and we provide the source code, some unit tests and a couple of benchmarks.
 
 All of this project is made available under GNU Lesser General Public licence 3.0 as published by the Free Software Foundation, they are distributed hoping that they may be useful but without any 
-warranty of any type. The licence is available [here]{https://www.gnu.org/licenses/lgpl.html}.
+warranty of any type. The licence is available [here](https://www.gnu.org/licenses/lgpl.html).
 
 * **Version 0.1**
 
