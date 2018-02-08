@@ -1,0 +1,50 @@
+paolini@titanic:~/ff_comp/test$ ./videobenchmark.sh -p 20 helicopter.avi 
+Selected pipeline mode in addition
+Starting the benchmark with 20 iterations
+iteration number: 0
+[----------] 5.0% completed
+iteration number: 1
+[#---------] 10.0% completed
+iteration number: 2
+[#---------] 15.0% completed
+iteration number: 3
+[##--------] 20.0% completed
+iteration number: 4
+[##--------] 25.0% completed
+iteration number: 5
+[###-------] 30.0% completed
+iteration number: 6
+[###-------] 35.0% completed
+iteration number: 7
+[####------] 40.0% completed
+iteration number: 8
+[####------] 45.0% completed
+iteration number: 9
+[#####-----] 50.0% completed
+iteration number: 10
+[#####-----] 55.0% completed
+iteration number: 11
+[######----] 60.0% completed
+iteration number: 12
+[######----] 65.0% completed
+iteration number: 13
+[#######---] 70.0% completed
+iteration number: 14
+[#######---] 75.0% completed
+iteration number: 15
+[########--] 80.0% completed
+iteration number: 16
+[########--] 85.0% completed
+iteration number: 17
+[#########-] 90.0% completed
+iteration number: 18
+[#########-] 95.0% completed
+iteration number: 19
+[##########] 100.0% completed
+Average / Min / Max inner Comp completion time (ms):		66725.90 / 66504.10 / 66988.60
+Average / Min / Max inner Seq completion time (ms):		66810.70 / 66491.00 / 67111.30
+Average / Min / Max inner Pipeline completion time (ms):	35357.70 / 35305.70 / 35418.10
+Difference between comp and seq:				0.13%
+Difference between comp and pipe:				47.01%
+Difference between seq and pipe:				47.08%
+

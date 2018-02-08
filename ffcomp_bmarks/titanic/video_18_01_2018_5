@@ -1,0 +1,37 @@
+Using comp skeleton
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 8873.77 (ms)
+Average time per frame: 3.4222 (ms)
+(with 2593 frames)
+Average branch completion time: 4231.99 (ms)
+Done!
+
+Running the optional farm test with seq branches
+Using seq nodes
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 9005.02 (ms)
+Average time per frame: 3.47282 (ms)
+(with 2593 frames)
+Average branch completion time: 4233 (ms)
+Done!
+
+Running the optional farm test with pipeline branches
+Using pipeline skeleton
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 9123.39 (ms)
+Average time per frame: 3.51847 (ms)
+(with 2593 frames)
+Average branch completion time: 4556.43 (ms)
+Done!
+
+Average / Min / Max inner Comp completion time (ms):            66697.80 / 66490.00 / 67018.60
+Average / Min / Max inner Seq completion time (ms):             70748.30 / 66545.60 / 106750.00
+Average / Min / Max inner Pipeline completion time (ms):        39112.20 / 35335.10 / 72817.50
+Difference between comp and seq:                                5.73%
+Difference between comp and pipe:                               41.36%
+Difference between seq and pipe:                                44.72%
+
+

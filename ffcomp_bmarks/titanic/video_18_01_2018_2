@@ -1,0 +1,70 @@
+paolini@titanic:~/ff_comp/test$ ./videobenchmark.sh -p 30 helicopter.avi
+Selected pipeline mode in addition
+Starting the benchmark with 30 iterations
+iteration number: 0
+[----------] 3.3% completed
+iteration number: 1
+[----------] 6.7% completed
+iteration number: 2
+[#---------] 10.0% completed
+iteration number: 3
+[#---------] 13.3% completed
+iteration number: 4
+[#---------] 16.7% completed
+iteration number: 5
+[##--------] 20.0% completed
+iteration number: 6
+[##--------] 23.3% completed
+iteration number: 7
+[##--------] 26.7% completed
+iteration number: 8
+[###-------] 30.0% completed
+iteration number: 9
+[###-------] 33.3% completed
+iteration number: 10
+[###-------] 36.7% completed
+iteration number: 11
+[####------] 40.0% completed
+iteration number: 12
+[####------] 43.3% completed
+iteration number: 13
+[####------] 46.7% completed
+iteration number: 14
+[#####-----] 50.0% completed
+iteration number: 15
+[#####-----] 53.3% completed
+iteration number: 16
+[#####-----] 56.7% completed
+iteration number: 17
+[######----] 60.0% completed
+iteration number: 18
+[######----] 63.3% completed
+iteration number: 19
+[######----] 66.7% completed
+iteration number: 20
+[#######---] 70.0% completed
+iteration number: 21
+[#######---] 73.3% completed
+iteration number: 22
+[#######---] 76.7% completed
+iteration number: 23
+[########--] 80.0% completed
+iteration number: 24
+[########--] 83.3% completed
+iteration number: 25
+[########--] 86.7% completed
+iteration number: 26
+[#########-] 90.0% completed
+iteration number: 27
+[#########-] 93.3% completed
+iteration number: 28
+[#########-] 96.7% completed
+iteration number: 29
+[##########] 100.0% completed
+Average / Min / Max inner Comp completion time (ms):		71860.00 / 66521.10 / 158844.00
+Average / Min / Max inner Seq completion time (ms):		68295.20 / 66502.00 / 80640.00
+Average / Min / Max inner Pipeline completion time (ms):	38102.70 / 35326.60 / 68167.80
+Difference between comp and seq:				4.96%
+Difference between comp and pipe:				46.98%
+Difference between seq and pipe:				44.21%
+

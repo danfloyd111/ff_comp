@@ -1,0 +1,55 @@
+iteration number: 44
+[#########-] 90.0% completed
+iteration number: 45
+[#########-] 92.0% completed
+iteration number: 46
+[#########-] 94.0% completed
+iteration number: 47
+[#########-] 96.0% completed
+iteration number: 48
+[#########-] 98.0% completed
+iteration number: 49
+[##########] 100.0% completed
+
+Running the optional farm test with comp branches
+Using comp skeleton
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 9107.74 (ms)
+Average time per frame: 3.51243 (ms)
+(with 2593 frames)
+Average branch completion time: 4247.22 (ms)
+Done!
+
+Running the optional farm test with seq branches
+Using seq nodes
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 9105.21 (ms)
+Average time per frame: 3.51146 (ms)
+(with 2593 frames)
+Average branch completion time: 4246.5 (ms)
+Done!
+
+Running the optional farm test with pipeline branches
+Using pipeline skeleton
+Applying both enhance and emboss filters (it may take a while...)
+End of stream in input
+Completion time: 9150.15 (ms)
+Average time per frame: 3.52879 (ms)
+(with 2593 frames)
+Average branch completion time: 4570.08 (ms)
+Done!
+
+Average / Min / Max inner Comp completion time (ms):            66773.80 / 66489.40 / 67004.50
+Average / Min / Max inner Seq completion time (ms):             66736.50 / 66430.90 / 66994.70
+Average / Min / Max inner Pipeline completion time (ms):        35358.50 / 35294.30 / 35447.10
+Difference between comp and seq:                                0.06%
+Difference between comp and pipe:                               47.05%
+Difference between seq and pipe:                                47.02%
+
+
+real    142m15.480s
+user    422m19.700s
+sys     6m37.892s
+

@@ -1,0 +1,24 @@
+(-) Generating random data set...
+(-) Done!
+-- Benchmark specifications --
+Number of cores (for the pipeline test): 32
+Data set size:                           50(MB)
+Parallelism grain:                       100 runs per stage
+Warning: it's recommended to not exceed the number of cores of this machine
+Running sequential computation...
+(-) Done! [Elapsed time: 1.34601e+06(ms)]
+Running composed computation...
+(|) Done! [Elapsed time: 1.36541e+06(ms)]
+Running pipelined computation...
+(\) Done! [Elapsed time: 51149.6(ms)]
+(|) Running farmed computation...
+(\) Done! [Elapsed time: 51599.3(ms)]
+-- Performance statistics --
+Difference between sequential and comp:     19397.381488(ms) 	  1.42%
+Difference between pipeline and comp:       1314257.623223(ms) 	96.25%
+Difference between farm and comp:           1313807.861861(ms) 	96.22%
+Difference between sequential and pipeline: 1294860.241735(ms) 	96.20%
+Difference between sequential and farm:     1294410.480373(ms) 	96.17%
+Difference between pipeline and farm:       449.761362(ms) 	    0.87%
+Checking consistency between the result sets...
+(/) The results are consistent

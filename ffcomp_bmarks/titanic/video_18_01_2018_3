@@ -1,0 +1,29 @@
+paolini@titanic:~/ff_comp/test$ ./videobenchmark.sh -p 10 helicopter.avi
+Selected pipeline mode in addition
+Starting the benchmark with 10 iterations
+iteration number: 0
+[#---------] 10.0% completed
+iteration number: 1
+[##--------] 20.0% completed
+iteration number: 2
+[###-------] 30.0% completed
+iteration number: 3
+[####------] 40.0% completed
+iteration number: 4
+[#####-----] 50.0% completed
+iteration number: 5
+[######----] 60.0% completed
+iteration number: 6
+[#######---] 70.0% completed
+iteration number: 7
+[########--] 80.0% completed
+iteration number: 8
+[#########-] 90.0% completed
+iteration number: 9
+[##########] 100.0% completed
+Average / Min / Max inner Comp completion time (ms):		66801.10 / 66537.90 / 67042.40
+Average / Min / Max inner Seq completion time (ms):		66724.60 / 66512.30 / 66990.00
+Average / Min / Max inner Pipeline completion time (ms):	35363.00 / 35333.00 / 35385.90
+Difference between comp and seq:				0.11%
+Difference between comp and pipe:				47.06%
+Difference between seq and pipe:				47.00%
