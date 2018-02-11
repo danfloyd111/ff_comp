@@ -1,7 +1,7 @@
 # README #
 
 This README document all the necessary steps to get this application up and running.      
-** NOTE: this document is actually under construction! **
+**NOTE:** this document is actually under construction!
 
 ### What is this repository for? ###
 
